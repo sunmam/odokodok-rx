@@ -922,6 +922,8 @@ textarea.in{resize:vertical;line-height:1.6}
 }
 @media (max-width:760px){.empty{padding:18px 12px;font-size:15px}.empty .em-e{font-size:34px}}
 .sh-t h1,.sh-t p,.case h3,.pet h3,.f-body h3{word-break:keep-all}
+/* 마음 약국 안내 괄호 문구: 늘 한 줄 (좁은 화면에서는 글자를 조금 줄임) */
+.sh-sub{white-space:nowrap;letter-spacing:-.02em;font-size:clamp(9px,calc((100vw - 56px) / 29),14px)!important}
 
 </style>
 </head>
@@ -934,7 +936,7 @@ textarea.in{resize:vertical;line-height:1.6}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261001174047";
+const BUILD = "20261001174659";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
