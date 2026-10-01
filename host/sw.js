@@ -1,4 +1,4 @@
-/* 오독오독 처방전 — 오프라인에서도 화면이 뜨도록 하는 간단한 서비스 워커 (항상 새 버전 먼저) */
+/* 오독오독 매체 치유 — 오프라인에서도 화면이 뜨도록 하는 간단한 서비스 워커 (항상 새 버전 먼저) */
 const CACHE='odokodok-rx-v1';
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./index.html','./manifest.webmanifest','./icon-192.png'])).catch(()=>{}))});
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));

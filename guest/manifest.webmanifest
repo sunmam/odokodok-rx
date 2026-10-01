@@ -1,6 +1,6 @@
 {
-  "name": "오독오독 처방전",
-  "short_name": "오독 처방전",
+  "name": "오독오독 매체 치유",
+  "short_name": "오독 매체치유",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

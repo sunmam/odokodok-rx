@@ -1,6 +1,6 @@
 {
-  "name": "오독오독 처방전 호스트",
-  "short_name": "처방전 호스트",
+  "name": "오독오독 매체 치유 호스트",
+  "short_name": "매체치유 호스트",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
