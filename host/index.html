@@ -864,6 +864,92 @@ textarea.in{resize:vertical;line-height:1.6}
 @media (max-width:600px){.logo.sm .rxbadge{font-size:10px;padding:1px 6px 0}.brand-sub{max-width:92vw}}
 .updbar{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:230;display:flex;align-items:center;gap:10px;background:var(--ink);color:#fff;font-family:var(--ui);font-size:15px;padding:8px 10px 8px 16px;border-radius:999px;box-shadow:0 6px 0 rgba(0,0,0,.25),0 14px 30px rgba(0,0,0,.25);animation:popin .4s cubic-bezier(.2,1.4,.4,1);white-space:nowrap;max-width:calc(100% - 20px)}
 
+/* =========================================================
+   휴대폰 화면 맞춤 (2026-10-01)
+   ========================================================= */
+/* 첫 화면: 떠다니는 장식은 맨 위에만 (스크롤하면 함께 올라가 사라져요) */
+.deco{position:absolute;top:0;left:0;right:0;height:min(640px,100vh);bottom:auto}
+.jwrap{grid-template-columns:minmax(0,1fr)}
+.jwrap>*{min-width:0}
+@media (max-width:640px){
+  .deco .d1{width:46px;height:46px;left:-10px;top:250px}
+  .deco .d3{left:-6px;bottom:auto;top:430px;border-left-width:24px;border-right-width:24px;border-bottom-width:40px}
+  .deco .d4{width:36px;height:36px;right:-6px;bottom:auto;top:380px}
+  .deco .d6{left:auto;right:-8px;top:520px}
+  .jwrap{padding:18px 12px 50px;gap:18px}
+  .join-card{padding:16px}
+  .jfloat{transform:scale(.85)}
+}
+.pick-hint{font-family:var(--ui);font-size:14px;background:var(--lemon);border:2px solid var(--ink);border-radius:999px;padding:3px 12px;box-shadow:0 3px 0 var(--ink);animation:bob 2s ease-in-out infinite}
+.homebtn{border:0;background:none;padding:0;cursor:pointer;display:inline-flex;align-items:center}
+.homebtn:hover .logo span{animation:crunch .8s}
+.home-card{gap:14px}
+
+/* 상단 바: 좁은 화면에서 잘리지 않게 */
+@media (max-width:420px){
+  .mechip{padding:3px}
+  .mechip b{display:none}
+  .tb-row .btn.sm{padding:4px 9px}
+}
+
+/* 메뉴 첫 부분(그림+설명)을 휴대폰에서 작게 → 글쓰기 상자가 한 화면에 들어오게 */
+@media (max-width:760px){
+  .main{padding:14px 12px 80px}
+  .shero{grid-template-columns:112px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;row-gap:8px;padding:14px;border-radius:22px;align-items:center}
+  .shero::after{width:160px;height:160px;inset:auto -50px -70px auto}
+  .sh-art{zoom:.38;width:300px;height:290px;transform:none;margin:0;grid-row:1;grid-column:1}
+  .sh-t{display:contents}
+  .sh-t>*{position:relative;z-index:1}
+  .sh-k{grid-column:2;grid-row:1;align-self:start;font-size:10px;letter-spacing:.1em;margin-top:6px}
+  .sh-t h1{grid-column:2;grid-row:1;align-self:end;margin-bottom:10px;font-size:27px;-webkit-text-stroke:1.5px var(--ink);text-shadow:2px 2px 0 var(--th-d),3px 3px 0 var(--ink)}
+  .sh-t h1 br{display:none}
+  .sh-t p{grid-column:1/-1;font-size:13.5px;line-height:1.6}
+  .sh-t p br{display:none}
+  .sh-sub{font-size:12px}
+  .sh-stats{grid-column:1/-1;gap:6px}
+  .sh-stats span{font-size:12px;padding:1px 8px;box-shadow:0 2px 0 var(--ink)}
+  .sh-stats b{font-size:14px}
+  .sh-act{grid-column:1/-1;margin-top:0}
+  .sh-act .btn.big{font-size:15px;padding:8px 14px;border-radius:14px}
+  .compose{margin-top:14px;padding:14px;gap:10px}
+  .cp-hd h2,.cp-hd h3{font-size:19px}
+  .cp-ic{width:34px;height:34px;font-size:19px}
+  .lock-note{font-size:12px}
+  .tagpick .tchip,.dosepick .tchip{font-size:13px;padding:3px 9px}
+  .compose .row .btn.big{font-size:16px;padding:10px 16px}
+  .filters{margin:16px 0 12px}
+  .fchip{font-size:14px;padding:4px 12px}
+  .wgrid,.vgrid,.tgrid,.cgrid,.pgrid{gap:16px}
+  .cork{padding:22px 14px;gap:26px}
+  .court-hd{padding:16px}
+  .ch-emo{width:60px;height:60px;font-size:34px}
+}
+.pick-hint{white-space:nowrap}
+@media (max-width:640px){
+  .char-stage{gap:12px;padding:12px}
+  .char-stage .av.xl{width:84px;height:84px}
+  .char-stage .av.xl span{font-size:46px}
+  .char-name b{font-size:21px}
+  .pick-hint{font-size:13px;padding:2px 10px}
+}
+@media (max-width:760px){
+  .tb-in{padding:7px 10px 8px;gap:7px}
+  .mtab{padding:5px 3px 4px;min-width:72px;border-radius:14px;box-shadow:0 4px 0 var(--ink)}
+  .mtab.on{box-shadow:0 1px 0 var(--ink)}
+  .mtab .mt-ic{width:28px;height:28px;font-size:16px;border-radius:9px}
+  .mtab .mt-t{font-size:12px}
+  .shero{padding:12px;row-gap:6px}
+  .sh-art{zoom:.34}
+  .shero>.sh-t>.sh-stats{display:none}
+  .sh-t p{font-size:13px;line-height:1.5}
+  .sh-sub{font-size:11.5px;margin-top:2px}
+  .compose .row>small.muted{display:none}
+  #w-text{min-height:0;height:68px}
+  .compose .imgpick .btn.sm{font-size:13px}
+}
+@media (max-width:760px){.empty{padding:18px 12px;font-size:15px}.empty .em-e{font-size:34px}}
+.sh-t h1,.sh-t p,.case h3,.pet h3,.f-body h3{word-break:keep-all}
+
 </style>
 </head>
 <body>
@@ -875,7 +961,7 @@ textarea.in{resize:vertical;line-height:1.6}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261001165230";
+const BUILD = "20261001172813";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1361,7 +1447,7 @@ function vRx(){
   return `
   <section class="shero">${artPharm()}
     <div class="sh-t"><span class="sh-k">MAUM PHARMACY</span><h1>마음 약국</h1>
-      <p>오늘 마음이 아픈 곳을 <b>익명으로 접수</b>하면,<br>다른 팀원들이 <b>처방전</b>을 드려요.<br><small class="sh-sub">(선정한 매체 속 한 구절, 대사, 명언, 이미지, 혹은 자신의 말 등)</small></p>
+      <p>오늘 마음이 아픈 곳을 <b>익명으로 접수</b>하면, <br>다른 팀원들이 <b>처방전</b>을 드려요. <br><small class="sh-sub">(선정한 매체 속 한 구절, 대사, 명언, 이미지, 혹은 자신의 말 등)</small></p>
       <div class="sh-stats"><span><b>${ws.length}</b>건 접수</span><span><b>${rxs.length}</b>장 처방</span><span><b>${ws.filter(w=>w.solved).length}</b>명 회복 🌈</span></div></div>
   </section>
   ${ROLE.host?'':`<section class="card compose">
@@ -1501,8 +1587,8 @@ function vVend(){
   const rooms=myRooms();const un=unreadAll();
   return `
   <section class="shero">${artVM(vs)}
-    <div class="sh-t"><span class="sh-k">BLIND SENTENCE MACHINE</span><h1>블라인드<br>문장 자판기</h1>
-      <p>출처는 <b>꽁꽁 숨기고</b>, 밑줄 친 치명적인 한 문장과 추천 이유만!<br>마음에 드는 문장을 <b>뽑으면</b> 매체 종류와 제목이 공개되고 추천인과 <b>1:1 대화방</b>이 열려요.</p>
+    <div class="sh-t"><span class="sh-k">BLIND SENTENCE MACHINE</span><h1>블라인드 <br>문장 자판기</h1>
+      <p>출처는 <b>꽁꽁 숨기고</b>, 밑줄 친 치명적인 한 문장과 추천 이유만! <br>마음에 드는 문장을 <b>뽑으면</b> 매체 종류와 제목이 공개되고 추천인과 <b>1:1 대화방</b>이 열려요.</p>
       <div class="sh-stats"><span><b>${vs.length}</b>개 캡슐</span><span><b>${vs.reduce((n,v)=>n+(v.drawn||0),0)}</b>번 뽑힘</span><span><b>${rooms.length}</b>개 ${ROLE.host?'대화방':'내 대화방'}</span></div>
       <div class="sh-act">${ROLE.host?'':`<button class="btn pink big" data-a="v-new">🎁 내 문장 넣기</button>`}
         <button class="btn big inbox" data-a="rooms">💬 ${ROLE.host?'대화방 보기':'내 대화방'}${un?`<b class="nb">${un}</b>`:''}</button></div></div>
@@ -1633,7 +1719,7 @@ FORM.chat=async f=>{
 function copies(){return list('copy')}
 function artNote(){
   return `<div class="sh-art"><div class="nbk" aria-hidden="true"><div class="nb-cover"></div>
-    <div class="nb-page"><i class="nb-rings"></i><p class="nb-line"><span>밑줄 긋고,</span><br>옮겨 적고,<br><span>마음에 새기기</span></p></div>
+    <div class="nb-page"><i class="nb-rings"></i><p class="nb-line"><span>밑줄 긋고,</span><br>옮겨 적고, <br><span>마음에 새기기</span></p></div>
     <i class="nb-pen"></i><i class="tape"></i><i class="tape t2"></i></div>
     <span class="flo" style="left:4%;bottom:12%">✉️</span><span class="flo" style="right:6%;top:6%;animation-delay:-1.2s">🌿</span></div>`;
 }
@@ -1649,7 +1735,7 @@ function vCopy(){
   return `
   <section class="shero">${artNote()}
     <div class="sh-t"><span class="sh-k">HANDWRITTEN RELAY</span><h1>문장 필사</h1>
-      <p>내가 <b>손으로 필사한 한 문장</b>을 사진으로 올리면,<br>누군가 <b>다른 매체의 필사</b>로 화답하며 서로의 생각을 덧붙여요.<br>천천히 주고받는 힐링 편지함이에요.</p>
+      <p>내가 <b>손으로 필사한 한 문장</b>을 사진으로 올리면, <br>누군가 <b>다른 매체의 필사</b>로 화답하며 서로의 생각을 덧붙여요. <br>천천히 주고받는 힐링 편지함이에요.</p>
       <div class="sh-stats"><span><b>${roots.length}</b>장 필사</span><span><b>${all.length-roots.length}</b>통 화답</span><span><b>${roots.filter(r=>!rep[r.id]).length}</b>장 기다리는 중</span></div>
       ${ROLE.host?'':'<div class="sh-act"><button class="btn orange big" data-a="cp-new">📷 필사 사진 올리기</button></div>'}</div>
   </section>
@@ -1754,7 +1840,7 @@ function vCourt(){
   return `
   <section class="shero"><div class="sh-art">${artBalance(0,null,true)}<div class="gavel" aria-hidden="true"><i class="gs"></i><i class="gh"></i></div></div>
     <div class="sh-t"><span class="sh-k">CHARACTER COURT</span><h1>인물법정</h1>
-      <p>매체 속 <b>논란의 인물</b>이 피고인석에 섰어요!<br><b>🛡️ 변호인단</b>과 <b>⚔️ 검사단</b> 중 한 팀을 골라 짧은 변론으로 맞서요.<br>🔨 <b>인정</b>을 많이 받은 쪽으로 정의의 저울이 기울어요.</p>
+      <p>매체 속 <b>논란의 인물</b>이 피고인석에 섰어요! <br><b>🛡️ 변호인단</b>과 <b>⚔️ 검사단</b> 중 한 팀을 골라 짧은 변론으로 맞서요. <br>🔨 <b>인정</b>을 많이 받은 쪽으로 정의의 저울이 기울어요.</p>
       <div class="sh-stats"><span><b>${live.length}</b>건 재판 중</span><span><b>${ts.length}</b>건 사건</span><span><b>${list('plea').length}</b>개 변론</span></div>
       <div class="sh-act">${ROLE.host?'<button class="btn lemon big" data-a="t-new">⚖️ 새 사건 접수</button>':'<button class="btn lemon big" data-a="pt-new">📝 재판 신청하기</button>'}</div></div>
   </section>
@@ -1847,7 +1933,7 @@ function vCourtHost(){
   return `
   <section class="shero"><div class="sh-art">${artBalance(0,null,true)}<div class="gavel" aria-hidden="true"><i class="gs"></i><i class="gh"></i></div></div>
     <div class="sh-t"><span class="sh-k">CHARACTER COURT · HOST</span><h1>인물법정</h1>
-      <p>게스트의 <b>재판 신청서</b>와 호스트가 접수한 사건이 <b>사건 폴더</b>에 모여요.<br>폴더 안에서 개정하고, 끝난 사건은 <b>📦 보관</b>하면 게스트 화면에서 사라져요.</p>
+      <p>게스트의 <b>재판 신청서</b>와 호스트가 접수한 사건이 <b>사건 폴더</b>에 모여요. <br>폴더 안에서 개정하고, 끝난 사건은 <b>📦 보관</b>하면 게스트 화면에서 사라져요.</p>
       <div class="sh-stats"><span><b>${wait}</b>건 심사 대기</span><span><b>${act.filter(f=>f.t&&tState(f.t)==='live').length}</b>건 재판 중</span><span><b>${arc.length}</b>개 보관</span></div>
       <div class="sh-act"><button class="btn lemon big" data-a="t-new">⚖️ 새 사건 접수</button></div></div>
   </section>
@@ -1895,7 +1981,7 @@ ACT['f-arch']=async el=>{
 };
 ACT['f-del']=el=>{
   const f=folders().find(x=>x.id===el.dataset.id);if(!f)return;const d=f.p||f.t;
-  confirmBox(`「${esc(d.who)}」 사건 폴더를 통째로 지울까요?<br><small class="muted">신청서·사건 파일·변론·인정이 모두 지워지고 되돌릴 수 없어요.</small>`,'폴더 삭제',async()=>{
+  confirmBox(`「${esc(d.who)}」 사건 폴더를 통째로 지울까요? <br><small class="muted">신청서·사건 파일·변론·인정이 모두 지워지고 되돌릴 수 없어요.</small>`,'폴더 삭제',async()=>{
     const ps=folderDocs(f);
     for(let i=0;i<ps.length;i+=40){const ok=await W(()=>Store.batch(ps.slice(i,i+40).map(path=>({op:'delete',path}))));if(ok===false)return}
     CUR.folder=null;CUR.trial=null;toast('폴더를 지웠어요.');rerender();
@@ -2124,7 +2210,7 @@ ACT['tsel-all']=()=>{TSEL.ids=new Set(chats().map(m=>m.id));TSEL.anchor=TSEL.anc
 ACT['tsel-clear']=()=>{TSEL.anchor=null;TSEL.ids.clear();patchTalk()};
 ACT['tsel-del']=()=>{
   const ids=[...TSEL.ids];if(!ids.length)return;
-  confirmBox(`선택한 메시지 <b>${ids.length}개</b>를 한꺼번에 지울까요?<br><small class="muted">되돌릴 수 없어요.</small>`,`${ids.length}개 지우기`,async()=>{
+  confirmBox(`선택한 메시지 <b>${ids.length}개</b>를 한꺼번에 지울까요? <br><small class="muted">되돌릴 수 없어요.</small>`,`${ids.length}개 지우기`,async()=>{
     for(let i=0;i<ids.length;i+=40){const ok=await W(()=>Store.batch(ids.slice(i,i+40).map(id=>({op:'delete',path:'chat/'+id}))));if(ok===false)return}
     TSEL.on=false;TSEL.anchor=null;TSEL.ids.clear();patchTalk();toast(`메시지 ${ids.length}개를 지웠어요.`);
   },{danger:true});
@@ -2153,7 +2239,7 @@ function taskLate(t,at){return !!(t.due&&at>t.due)}
 function hwTodo(){if(ROLE.host||!ME)return 0;return tasks().filter(t=>!taskClosed(t)&&!mySub(t.id)).length}
 function artTray(){
   return `<div class="sh-art"><div class="tray3d" aria-hidden="true"><div class="tray-back"></div><i class="paper p1"></i><i class="paper p2"></i><i class="paper p3"></i><div class="tray-front">📥 제출함</div></div>
-    <span class="flo" style="left:4%;top:10%">📎</span><span class="flo" style="right:6%;top:2%;animation-delay:-1.3s">✏️</span><span class="hw-stamp">제출<br>완료</span></div>`;
+    <span class="flo" style="left:4%;top:10%">📎</span><span class="flo" style="right:6%;top:2%;animation-delay:-1.3s">✏️</span><span class="hw-stamp">제출 <br>완료</span></div>`;
 }
 function vHw(){
   if(ROLE.host&&CUR.task&&Store.peek('task/'+CUR.task))return vTaskDetail(CUR.task);
@@ -2163,7 +2249,7 @@ function vHw(){
   return `
   <section class="shero">${artTray()}
     <div class="sh-t"><span class="sh-k">SUBMISSION BOX</span><h1>제출함</h1>
-      <p>호스트가 낸 과제를 <b>글</b>이나 <b>파일</b> 및 <b>이미지</b>로 제출해요.<br>제출물은 <b>나와 호스트만</b> 볼 수 있고, 마감 전까지 몇 번이든 다시 낼 수 있어요.</p>
+      <p>호스트가 낸 과제를 <b>글</b>이나 <b>파일</b> 및 <b>이미지</b>로 제출해요. <br>제출물은 <b>나와 호스트만</b> 볼 수 있고, 마감 전까지 몇 번이든 다시 낼 수 있어요.</p>
       <div class="sh-stats"><span><b>${ts.length}</b>개 과제</span>${ROLE.host?`<span><b>${done}</b>건 제출</span><span><b>${people}</b>명 참여자</span>`:`<span><b>${done}</b>개 제출 완료</span><span><b>${hwTodo()}</b>개 남음</span>`}</div>
       ${ROLE.host?'<div class="sh-act"><button class="btn lemon big" data-a="hw-new">＋ 과제 만들기</button></div>':''}</div>
   </section>
@@ -2181,7 +2267,7 @@ function taskCard(t){
       <button class="btn lemon wide" data-a="hw-open" data-id="${t.id}">📋 제출 현황 보기</button>`;
   }else{
     const s=mySub(t.id);
-    body=`<div class="mysub${s?' ok':''}">${s?`✅ ${fmtDate(s.at)} 제출 완료${taskLate(t,s.at)?' <span class="late">늦은 제출</span>':''}${s.file?`<br><small>📎 ${esc(s.file.name)}</small>`:''}`:'⏳ 아직 제출하지 않았어요'}</div>
+    body=`<div class="mysub${s?' ok':''}">${s?`✅ ${fmtDate(s.at)} 제출 완료${taskLate(t,s.at)?' <span class="late">늦은 제출</span>':''}${s.file?` <br><small>📎 ${esc(s.file.name)}</small>`:''}`:'⏳ 아직 제출하지 않았어요'}</div>
       <button class="btn ${s?'':'lemon'} wide" data-a="hw-sub" data-id="${t.id}" ${cl?'disabled':''}>${cl?'🔒 마감됐어요':s?'✏️ 다시 제출하기':'📮 제출하기'}</button>`;
   }
   return `<article class="task${cl?' closed':''}">
