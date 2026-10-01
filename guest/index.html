@@ -835,6 +835,7 @@ textarea.in{resize:vertical;line-height:1.6}
 .archbox summary b{font-weight:400;background:var(--ink);color:#fff;border-radius:8px;padding:0 8px}
 .fold-in .case,.fold-in .pet{margin-top:28px}
 @media (max-width:600px){.logo.sm .rxbadge{font-size:10px;padding:1px 6px 0}.brand-sub{max-width:92vw}}
+.updbar{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:230;display:flex;align-items:center;gap:10px;background:var(--ink);color:#fff;font-family:var(--ui);font-size:15px;padding:8px 10px 8px 16px;border-radius:999px;box-shadow:0 6px 0 rgba(0,0,0,.25),0 14px 30px rgba(0,0,0,.25);animation:popin .4s cubic-bezier(.2,1.4,.4,1);white-space:nowrap;max-width:calc(100% - 20px)}
 
 </style>
 </head>
@@ -847,6 +848,7 @@ textarea.in{resize:vertical;line-height:1.6}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
+const BUILD = "20261001165230";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1073,7 +1075,7 @@ const Store=(()=>{
       if(LOCAL)return localRun(()=>Srv.join(raw,b));
       return call({op:'join',...b});
     },
-    /* 문장 자판기 뽑기: 책 제목 공개 + 1:1 대화방 */
+    /* 문장 자판기 뽑기: 출처(매체 종류·제목) 공개 + 1:1 대화방 */
     async draw(id,me){
       if(LOCAL)return localRun(()=>Srv.draw(raw,{id,tok,by:me.by,nick:me.nick,char:me.char}));
       const r=await call({op:'draw',id,by:me.by,nick:me.nick,char:me.char});
@@ -1174,7 +1176,23 @@ document.addEventListener('pointermove',e=>{
   el.style.transform=`perspective(900px) rotateX(${(-y*9).toFixed(2)}deg) rotateY(${(x*11).toFixed(2)}deg) translateY(-5px)`;
 });
 document.addEventListener('pointerleave',()=>{if(tiltEl){tiltEl.style.transform='';tiltEl=null}});
-if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{}));
+/* 새 버전 알림: 열어 둔 화면이 옛 버전이면 위에 "새로고침" 띠가 떠요 (쓰던 글이 날아가지 않게 자동으로 바꾸지는 않음) */
+async function checkUpdate(){
+  if(typeof BUILD==='undefined'||!BUILD||$('#updbar'))return;
+  try{
+    const html=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();
+    const m=html.match(/const BUILD = "(\d+)";/);
+    if(m&&m[1]!==BUILD){
+      const b=document.createElement('div');b.id='updbar';b.className='updbar';b.setAttribute('role','status');
+      b.innerHTML='✨ 새 버전이 나왔어요! <button class="btn sm lemon" onclick="location.reload()">🔄 새로고침</button>';
+      document.body.appendChild(b);
+    }
+  }catch(e){}
+}
+setInterval(checkUpdate,3*60*1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
+window.addEventListener('load',()=>setTimeout(checkUpdate,5000));
 
 /* 화면 다시 그리기: 쓰던 입력값·스크롤은 그대로 */
 function paint(el,html){
@@ -1534,7 +1552,7 @@ async function drawVend(id){
   if(!$('#gacha'))return;
   const book=r.book||{};const rid=String(r.room||'').replace(/^room\//,'');
   g.classList.remove('wait');g.classList.add('open');
-  $('#gmsg').textContent='짜잔! 이 문장이 들어 있던 책은…';
+  $('#gmsg').textContent='짜잔! 이 문장의 출처는…';
   $('#gticket').innerHTML=`<small>🔓 출처 공개 · ${esc((mediaOf(book.media)||{n:'매체'}).n)}</small><b>「${esc(book.title||'?')}」</b><span>${esc(book.author||'')}</span>`;
   await sleep(450);confetti();
   $('#gact').innerHTML=`<button class="btn pink big" data-a="chat" data-id="${esc(rid)}">💬 추천인과 대화하기</button><button class="btn" data-close>나중에</button>`;
@@ -2316,7 +2334,7 @@ function vJoin(){
     <p class="hint">같은 이름(학번)으로 다시 들어오면 내 글과 대화방이 그대로 이어져요.</p>
   </div>`;
   app.innerHTML=`${DECO}<div class="jwrap">${hero()}${body}
-    <div class="jmenus">${TABS.map((t,i)=>`<div class="jm tilt" style="--c:${t.c};--i:${i}"><span class="mt-ic">${t.e}</span><b>${t.n}</b><small>${{talk:'우리끼리 단체 대화',rx:'익명 고민에 책 구절 처방',vend:'제목을 가린 한 문장 뽑기',copy:'손글씨 필사 릴레이',court:'변호인 vs 검사 공방',hw:'과제를 글·파일로 제출'}[t.k]}</small></div>`).join('')}</div>
+    <div class="jmenus">${TABS.map((t,i)=>`<div class="jm tilt" style="--c:${t.c};--i:${i}"><span class="mt-ic">${t.e}</span><b>${t.n}</b><small>${{talk:'우리끼리 단체 대화',rx:'익명 고민에 매체 속 한 구절 처방',vend:'제목을 가린 한 문장 뽑기',copy:'손글씨 필사 릴레이',court:'변호인 vs 검사 공방',hw:'과제를 글·파일로 제출'}[t.k]}</small></div>`).join('')}</div>
     ${LOCAL?'<p class="muted" style="font-size:13px;text-align:center">체험 모드: 이 브라우저에만 저장돼요.</p>':''}</div>`;
   document.body.className='th-rx';
 }
