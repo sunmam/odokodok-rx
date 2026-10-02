@@ -1169,6 +1169,18 @@ textarea.in{resize:vertical;line-height:1.6}
 .vc-top .trash{margin-left:4px}
 .tk-i{font-family:var(--ui)!important;font-size:18px!important}
 .tk-r{font-family:var(--body)!important;font-size:14px}
+/* 캡슐 고르기 (반짝이는 뽑기 캡슐 모양) */
+.capsel{display:flex;gap:10px;flex-wrap:wrap;padding:4px 2px}
+.gcap{position:relative;width:46px;height:46px;border:0;background:none;padding:0;border-radius:50%;transition:transform .15s}
+.gcap .gc-t,.gcap .gc-b{position:absolute;left:0;width:46px;height:23px;border:2.5px solid var(--ink)}
+.gcap .gc-t{top:0;border-radius:23px 23px 0 0;background:radial-gradient(circle at 34% 45%,rgba(255,255,255,.9) 0 9%,transparent 11%),var(--c)}
+.gcap .gc-b{top:21px;border-radius:0 0 23px 23px;background:linear-gradient(180deg,#fff,#EDE8FF)}
+.gcap:hover{transform:translateY(-3px) rotate(-8deg)}
+.gcap.on{transform:translateY(-4px) scale(1.12);filter:drop-shadow(0 5px 0 var(--ink))}
+.gcap.on::after{content:"✓";position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;background:var(--lemon);border:2px solid var(--ink);font-size:12px;display:grid;place-items:center;font-weight:700}
+.rct{min-width:38px;justify-content:center}
+.vc-lock .gcap.lk{flex:0 0 auto;animation:jiggle 2.4s ease-in-out infinite}
+.vc-lock span:nth-child(2){font-size:14px;line-height:1.35}
 
 </style>
 </head>
@@ -1181,7 +1193,7 @@ textarea.in{resize:vertical;line-height:1.6}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261002143957";
+const BUILD = "20261002154853";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1250,6 +1262,7 @@ const CASES=[
  {emo:'🎩',who:'허생',work:'허생전',author:'박지원',charge:'과일과 말총을 모조리 사들여 값을 올리는 매점매석으로 큰돈을 벌었다.'}
 ];
 const COURT_EMO=['🥂','🪲','🌪️','💰','☀️','🎩','👑','🗡️','🌹','🎭','🦹','🧓','👩‍🦰','🧑‍🎤','🐺','💍'];
+const COURT_EMO_N={'🥂':'축배·화려함','🪲':'벌레·변신','🌪️':'폭풍·격정','💰':'돈·욕심','☀️':'햇빛·충동','🎩':'신사·꾀','👑':'왕·권력','🗡️':'칼·폭력','🌹':'장미·사랑','🎭':'가면·두 얼굴','🦹':'악당','🧓':'노인','👩‍🦰':'여성 인물','🧑‍🎤':'예술가','🐺':'늑대·야성','💍':'반지·결혼'};
 
 /* ---------- 한국어 조사 ---------- */
 function hasBatchim(s){
@@ -1484,6 +1497,7 @@ function openModal({html,cls='',narrow=false,refresh=null,after=null}){
   m.innerHTML=`<div class="modal-in${narrow?' narrow':''}" role="dialog" aria-modal="true">${html}</div>`;
   m.addEventListener('click',e=>{if(e.target===m||e.target.closest('[data-close]'))closeModal()});
   document.body.appendChild(m);
+  noFill(m);
   MODAL={refresh,after};refreshModal();
   return m;
 }
@@ -1545,9 +1559,17 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdat
 window.addEventListener('load',()=>setTimeout(checkUpdate,5000));
 
 /* 화면 다시 그리기: 쓰던 입력값·스크롤은 그대로 */
+/* 브라우저 자동완성 끄기: 다른 방에서 썼던 문구가 칸 위에 뜨지 않게 (이름표를 매번 새로 붙여 기억과 연결이 안 되게) */
+function noFill(root){
+  $$('input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=password]),textarea',root).forEach(e=>{
+    e.setAttribute('autocomplete','off');e.setAttribute('autocorrect','off');e.setAttribute('autocapitalize','off');
+    e.name='f'+Math.random().toString(36).slice(2,10);
+  });
+}
 function paint(el,html){
   const keep={};$$('input[id],textarea[id],select[id]',el).forEach(x=>{if(x.type!=='file'&&x.type!=='checkbox')keep[x.id]=x.value});
   const y=window.scrollY;el.innerHTML=html;
+  noFill(el);
   for(const id in keep){const x=document.getElementById(id);if(x&&el.contains(x)&&x.type!=='file'&&!x.value)x.value=keep[id]}
   $$('[data-count]',el).forEach(updCount);
   window.scrollTo(0,y);
@@ -1697,7 +1719,9 @@ ACT.hide=el=>{
   W(()=>Store.set('hide/'+t+'-'+ME.by,{cid:CUR.cid,t,by:ME.by,at:Date.now()})).then(ok=>{if(ok!==false){toast('🗑 내 화면에서 지웠어요.');if(el.closest('#modal'))closeModal();rerender()}});
 };
 /* 이모티콘 + 이어 쓰는 댓글 */
-const REACT=['❤️','👍','😂','😢','😮','👏'];
+/* 순서를 바꾸면 이미 누른 이모티콘이 섞여요 — 새 이모티콘은 꼭 뒤에 덧붙이기 */
+const REACT=['❤️','👍','😂','😢','😮','👏','😄','🙏','🙇','😭','🥰','🔥','💯','🌿'];
+const REACT_N=['좋아요','최고','웃겨요','슬퍼요','놀라워요','박수','환한 웃음','감사해요','미안해요','엉엉 울어요','감동이에요','멋져요','완벽해요','힐링돼요'];
 function rcts(t){const out=REACT.map(()=>({n:0,mine:false}));for(const d of Object.values(Store.coll('rct'))){if(!d||d.cid!==CUR.cid||d.t!==t)continue;const o=out[d.i];if(o){o.n++;if(ME&&d.by===ME.by)o.mine=true}}return out}
 function cmtsOf(t){return list('cmt',c=>c.t===t).sort((a,b)=>(a.at||0)-(b.at||0))}
 function rctSum(t){return rcts(t).reduce((n,r)=>n+r.n,0)}
@@ -1705,7 +1729,7 @@ function cmtForm(t){return `<form class="cmt-in" data-f="cmt" data-t="${t}"><inp
 function talkBox(t,{form=true}={}){
   const r=rcts(t);const cs=cmtsOf(t);
   return `<div class="tbox">
-    <div class="rcts">${REACT.map((e,i)=>`<button class="rct${r[i].mine?' on':''}" data-a="rct" data-t="${t}" data-i="${i}" ${ROLE.host||!ME?'disabled':''} aria-label="${e} ${r[i].n}">${e}${r[i].n?`<small>${r[i].n}</small>`:''}</button>`).join('')}</div>
+    <div class="rcts">${REACT.map((e,i)=>`<button class="rct${r[i].mine?' on':''}" data-a="rct" data-t="${t}" data-i="${i}" ${ROLE.host||!ME?'disabled':''} title="${REACT_N[i]}" aria-label="${REACT_N[i]} ${r[i].n}">${e}${r[i].n?`<small>${r[i].n}</small>`:''}</button>`).join('')}</div>
     <div class="cmts">${cs.map(c=>`<div class="cmt">${avatar(c.char,'sm')}<div class="cmt-b"><b>${esc(c.nick)}${c.by==='host'?'<span class="hostb">HOST</span>':''}</b>${hostWho(c)}<p>${esc(c.text)}</p></div><small>${ago(c.at)}</small>${c._mine||ROLE.host?`<button class="tm-del" data-a="del" data-p="cmt/${c.id}" aria-label="댓글 지우기">✕</button>`:''}</div>`).join('')||'<p class="muted cmt-0">첫 댓글을 남겨 보세요 💬</p>'}</div>
     ${form?cmtForm(t):''}
   </div>`;
@@ -1746,7 +1770,7 @@ function artPharm(){
 function rxHero(){
   return `<section class="shero">${artPharm()}
     <div class="sh-t"><span class="sh-k">PHARMACY FOR THE SOUL</span><h1>마음 약국</h1>
-      ${heroLines(['마음이 아픈 곳을 <b>익명으로 접수</b>하면 | 팀원들이 <b>처방전</b>을 드려요.','팀원들이 올린 고민에도 | <b>처방전</b>을 달아요.','<small class="sh-sub">(팀 게스트가 하고 싶은 말, 매체 속 한 구절, 명언, 이미지 등)</small>'])}</div>
+      ${heroLines(['마음이 아픈 곳을 <b>익명으로 접수</b>하면 | 팀원들이 <b>처방전</b>을 드려요.','팀원들이 올린 고민에도 | <b>처방전</b>을 달아요.','<small class="sh-sub">(게스트의 말, 매체 속 한 구절, 명언, 이미지 등)</small>'])}</div>
   </section>`;
 }
 function vRx(){
@@ -1977,7 +2001,7 @@ function vends(){return list('vend').sort((a,b)=>(a.at||0)-(b.at||0))}
 /* 공개된 정보: 내 문장 · 호스트 · 내가 뽑은 문장 (옛 글은 제목·추천 이유 칸을 그대로 보여 줌) */
 function vInfo(v){
   const room=roomOf(v.id);const b=v._book||(room&&room.book)||null;if(!b)return null;
-  return{info:b.info||(b.title?bookPlain(b)+(b.page?' '+b.page:''):''),reason:b.reason||v.reason||''};
+  return{info:('info' in b)?b.info:(b.title?bookPlain(b)+(b.page?' '+b.page:''):''),reason:b.reason||v.reason||''};
 }
 function artVM(vs){
   const balls=vs.slice(-14);const pos=[];
@@ -2018,6 +2042,7 @@ function vMine(mine,no){
     <label class="fld">📍 문장 정보 <small class="muted">(뽑은 사람에게만 공개)</small><input class="in" id="v-info" maxlength="60" placeholder="쪽수, 어떤 장면, 00의 대사 등 · 예: 127쪽 / 마지막 장면 / 윤재의 대사"></label>
     <label class="fld">✍️ 문장 쓰기 *<textarea class="in quote-in" id="v-line" rows="3" maxlength="200" data-count="v-lc" placeholder="이 작품에서 밑줄 친 치명적인 한 문장"></textarea><span class="cnt" id="v-lc" style="justify-self:end">0/200</span></label>
     <label class="fld">💬 추천 이유 <small class="muted">(뽑은 사람에게만 공개)</small><input class="in" id="v-reason" maxlength="120" placeholder="예: 새벽 두 시에 읽고 한참을 멍하니 있었어요"></label>
+    <div class="fld">🎨 캡슐 고르기 <small class="muted">(내 문장이 이 캡슐에 담겨 자판기에 들어가요)</small><div class="capsel" id="v-cols">${CAPS.map((c,i)=>`<button type="button" class="gcap${i===(CUR.vCol??0)?' on':''}" style="--c:${c}" data-a="v-col" data-v="${i}" aria-label="캡슐 ${i+1}"><i class="gc-t"></i><i class="gc-b"></i></button>`).join('')}</div></div>
     <button class="btn pink big wide" data-a="v-post">🎰 자판기에 넣기</button>
   </section>
   <div class="filters"><h2 style="font-size:22px">✍️ 내가 쓴 문장</h2></div>
@@ -2037,10 +2062,10 @@ function vCard(v,no){
     ${open?`<div class="vinfo">${info.info?`<div class="vi-r"><span class="lbl">📍 문장 정보</span><span>${esc(info.info)}</span></div>`:''}${info.reason?`<div class="vi-r"><span class="lbl">💬 추천 이유</span><span>${esc(info.reason)}</span></div>`:''}
         <div class="vi-r"><span class="lbl">🙋 추천인</span><span>${v._mine?'나':ROLE.host?`${esc(w.nick||'')} ${hostWho(w)}`:who((room&&room.a)||{})}</span></div></div>
       ${talkBox(v.id)}`
-      :`<div class="vc-lock"><span>🔒 문장 정보 · 추천 이유</span><small>${nC||nR?`💬 ${nC} · ❤️ ${nR}`:''}</small><button class="btn pink" data-a="v-draw" data-id="${v.id}">🎰 뽑기!</button></div>`}
+      :`<div class="vc-lock"><span class="gcap lk" style="--c:${c}" aria-hidden="true"><i class="gc-t"></i><i class="gc-b"></i></span><span>🔒 문장 정보 · 추천 이유가<br>이 캡슐 안에 있어요</span><small>${nC||nR?`💬 ${nC} · ❤️ ${nR}`:''}</small><button class="btn pink" data-a="v-draw" data-id="${v.id}">🎰 뽑기!</button></div>`}
   </article>`;
 }
-ACT['v-view']=el=>{CUR.vView=CUR.vView===el.dataset.v?null:el.dataset.v;rerender()};
+ACT['v-view']=el=>{CUR.vView=CUR.vView===el.dataset.v?null:el.dataset.v;if(CUR.vCol==null)CUR.vCol=Math.floor(Math.random()*CAPS.length);rerender()};
 ACT['v-post']=async el=>{
   if(hostOnly())return;
   const g=id=>{const e=$('#'+id);return e?T(e.value):''};
@@ -2048,7 +2073,7 @@ ACT['v-post']=async el=>{
   const info=g('v-info'),reason=g('v-reason');const w=roomWork()||{};
   ['v-line','v-info','v-reason'].forEach(id=>{const e=$('#'+id);if(e){e.value='';if(e.dataset.count)updCount(e)}});
   el.disabled=true;
-  const ok=await W(()=>Store.set('vend/'+uid(),{cid:CUR.cid,line,color:Math.floor(Math.random()*CAPS.length),drawn:0,at:Date.now(),
+  const ok=await W(()=>Store.set('vend/'+uid(),{cid:CUR.cid,line,color:CUR.vCol??Math.floor(Math.random()*CAPS.length),drawn:0,at:Date.now(),
     _book:{info,reason,title:w.title||'',author:w.author||'',media:w.media||''},_who:{by:ME.by,nick:ME.nick,char:ME.char}}));
   el.disabled=false;
   if(ok===false){$('#v-line').value=line;$('#v-info').value=info;$('#v-reason').value=reason;return}
@@ -2077,7 +2102,7 @@ async function drawVend(id){
   let r;
   try{[r]=await Promise.all([Store.draw(id,ME),sleep(1900)])}catch(e){closeModal();dbErr(e);return}
   if(!$('#gacha'))return;
-  const b=r.book||{};const info=b.info||(b.title?bookPlain(b):''),reason=b.reason||v.reason||'';
+  const b=r.book||{};const info=('info' in b)?b.info:(b.title?bookPlain(b):''),reason=b.reason||v.reason||'';
   g.classList.remove('wait');g.classList.add('open');
   $('#gmsg').textContent='짜잔! 숨겨져 있던 이야기는…';
   $('#gticket').innerHTML=`<small>🔓 공개</small>${info?`<b class="tk-i">📍 ${esc(info)}</b>`:''}${reason?`<span class="tk-r">💬 ${esc(reason)}</span>`:''}${!info&&!reason?'<b class="tk-i">정보 없이 문장만 넣었어요</b>':''}`;
@@ -2115,7 +2140,7 @@ function pola(d){
   return `<article class="pola" style="--r:${r.toFixed(1)}deg;--tp:${TAPES[h%TAPES.length]}" data-a="c-open" data-id="${d.id}" tabindex="0" role="button" aria-label="필사 열기">
     <i class="tape"></i>
     <div class="pola-img">${d.img?`<img src="${d.img}" alt="필사 사진" loading="lazy">`:'<span style="font-size:40px">✍️</span>'}</div>
-    <div class="pola-cap"><b>${srcLine(d)}</b><p>${esc(d.thought)}</p></div>
+    <div class="pola-cap"><b>${srcLine(d)}</b>${d.thought?`<p>${esc(d.thought)}</p>`:""}</div>
     <div class="pola-ft">${who(d)}<span class="grow"></span><span>💬 ${nC}</span><span>❤️ ${nR}</span>${trashBtn(d,'copy/'+d.id)}</div>
   </article>`;
 }
@@ -2132,7 +2157,7 @@ function cpost(d){
     <div class="cp-t"><div class="row">${who(d)}<span class="grow"></span><small class="muted">${ago(d.at)}</small>${trashBtn(d,'copy/'+d.id)}</div>
       <h3 class="cp-src">${srcLine(d)}</h3>
       ${d.line?`<p class="cp-line">${esc(d.line)}</p>`:''}
-      <p class="cp-th">💭 ${esc(d.thought)}</p>
+      ${d.thought?`<p class="cp-th">💭 ${esc(d.thought)}</p>`:""}
     </div></div>`;
 }
 ACT['cp-new']=()=>{
@@ -2141,9 +2166,7 @@ ACT['cp-new']=()=>{
   openModal({cls:'th-copy',html:`<div class="modal-hd"><h2>✍️ 필사 사진 올리기</h2><button class="xbtn" data-close aria-label="닫기">✕</button></div>
     <div class="stack">
       <label class="upl"><input type="file" accept="image/*" id="cp-file" hidden><div class="upl-in" id="cp-prev"><span class="upl-e">📷</span><b>필사한 사진 고르기 / 찍기</b><small>공책에 손으로 옮겨 쓴 부분을 찍어 주세요</small></div></label>
-      ${mediaFields('cp',{d:{media:w.media,book:w.title,author:w.author}})}
-      <label class="fld">필사한 부분 옮겨 적기 <small class="muted">(글씨가 잘 안 보일 때를 위해)</small><textarea class="in quote-in" id="cp-line" rows="2" maxlength="300"></textarea></label>
-      <label class="fld">나의 생각 *<textarea class="in" id="cp-thought" rows="3" maxlength="300" data-count="cp-tc" placeholder="옮겨 적으며 든 생각"></textarea><span class="cnt" id="cp-tc" style="justify-self:end">0/300</span></label>
+      <label class="fld">제목<input class="in" id="cp-book" maxlength="60" value="${esc(w.title||'')}" placeholder="예: 아몬드"></label>
       <button class="btn orange big wide" data-a="cp-post">📮 게시판에 붙이기</button>
     </div>`});
 };
@@ -2161,11 +2184,9 @@ ACT['cp-post']=async el=>{
   if(hostOnly())return;
   const v=id=>T($('#'+id).value);
   if(!CUR.cpImg){toast('필사한 사진을 먼저 골라 주세요.');return}
-  const m=readMedia('cp'),book=m.book,thought=v('cp-thought');
-  if(!book){toast('제목을 적어 주세요.');$('#cp-book').focus();return}
-  if(!thought){toast('나의 생각을 한 줄이라도 적어 주세요.');$('#cp-thought').focus();return}
+  const w=roomWork()||{};const book=v('cp-book')||w.title||'';
   el.disabled=true;el.textContent='올리는 중…';
-  const ok=await W(()=>Store.set('copy/'+uid(),{cid:CUR.cid,re:'',img:CUR.cpImg,media:m.media,book,author:m.author,line:v('cp-line'),thought,by:ME.by,nick:ME.nick,char:ME.char,at:Date.now()}));
+  const ok=await W(()=>Store.set('copy/'+uid(),{cid:CUR.cid,re:'',img:CUR.cpImg,media:book===w.title?(w.media||''):'',book,author:book===w.title?(w.author||''):'',line:'',thought:'',by:ME.by,nick:ME.nick,char:ME.char,at:Date.now()}));
   if(ok===false){el.disabled=false;el.textContent='📮 다시 보내기';return}
   CUR.cpImg=null;pop('필사 완료!');closeModal();CUR.cF='all';rerender();
 };
@@ -2233,12 +2254,9 @@ function petCard(p){
 function caseForm({head,btn,act,data={},guest=false,alt=''}){
   return `<div class="modal-hd"><h2>${head}</h2><button class="xbtn" data-close aria-label="닫기">✕</button></div>
     <div class="stack">
-      <div class="fld">추천 사건 <small class="muted">누르면 아래 칸이 채워져요</small><div class="presets">${CASES.map((p,i)=>`<button class="tchip" style="--c:var(--indigo)" data-a="t-preset" data-i="${i}">${p.emo} ${esc(p.who)}</button>`).join('')}</div></div>
       <div class="g2"><label class="fld">피고인(인물) *<input class="in" id="t-who" maxlength="30" placeholder="예: 데이지 뷰캐넌" value="${esc(data.who||'')}"></label>
-        <label class="fld">아이콘<select class="in" id="t-emo">${COURT_EMO.map(e=>`<option ${e===data.emo?'selected':''}>${e}</option>`).join('')}</select></label></div>
-      <div class="g3 media-f"><label class="fld">매체 종류 *${mediaSelect('t-media',data.media||'novel')}</label>
-        <label class="fld">제목 *<input class="in" id="t-work" maxlength="40" placeholder="예: 위대한 개츠비" value="${esc(data.work||'')}"></label>
-        <label class="fld">저자·감독·글쓴이<input class="in" id="t-author" maxlength="30" placeholder="예: F. 스콧 피츠제럴드" value="${esc(data.author||'')}"></label></div>
+        <label class="fld">아이콘<select class="in" id="t-emo">${COURT_EMO.map(e=>`<option value="${e}" ${e===data.emo?'selected':''}>${e} (${COURT_EMO_N[e]||''})</option>`).join('')}</select></label></div>
+      ${roomWork()?`<div class="workline">📖 이 방의 작품 <b>${bookTxt(roomWork())}</b></div>`:''}
       <label class="fld">공소 사실 (논란이 되는 행동) *<textarea class="in quote-in" id="t-charge" rows="3" maxlength="200" placeholder="피고인이 무엇을 했는지 한두 문장으로">${esc(data.charge||'')}</textarea></label>
       <div class="fld">장면 사진 <small class="muted">(선택 · 사건이 일어난 장면, 인물 사진 등)</small>${data.img?`<small class="muted">신청서에 붙은 사진이 함께 들어가요</small>`:imgPick('pt')}</div>
       ${guest?`<label class="fld">신청 이유<input class="in" id="t-reason" maxlength="120" placeholder="예: 데이지가 정말 나쁜 사람인지 친구들과 따져 보고 싶어요"></label>`
@@ -2247,13 +2265,13 @@ function caseForm({head,btn,act,data={},guest=false,alt=''}){
       ${alt||''}
     </div>`;
 }
-function readCase(){const v=id=>{const e=$('#'+id);return e?T(e.value):''};return{who:v('t-who'),media:v('t-media'),work:v('t-work'),author:v('t-author'),charge:v('t-charge'),emo:$('#t-emo').value}}
-ACT['t-preset']=el=>{const p=CASES[+el.dataset.i];$('#t-who').value=p.who;$('#t-work').value=p.work;$('#t-author').value=p.author;$('#t-charge').value=p.charge;$('#t-emo').value=p.emo;$('#t-media').value=p.media||'novel'};
+/* 작품은 이 방의 작품으로 자동 */
+function readCase(){const v=id=>{const e=$('#'+id);return e?T(e.value):''};const w=roomWork()||{};return{who:v('t-who'),media:w.media||'',work:w.title||'',author:w.author||'',charge:v('t-charge'),emo:$('#t-emo').value}}
 ACT['pt-new']=()=>{if(hostOnly())return;delete CUR.imgs.pt;openModal({cls:'th-court',html:caseForm({head:'📝 인물법정 신청서',btn:'📮 호스트에게 신청하기',act:'pt-save',guest:true})})};
 ACT['pt-save']=async el=>{
   if(hostOnly())return;
   const c=readCase();const reason=T($('#t-reason').value);
-  if(!c.who||!c.work||!c.charge){toast('피고인·제목·공소 사실을 모두 적어 주세요.');return}
+  if(!c.who||!c.charge){toast('피고인과 공소 사실을 적어 주세요.');return}
   el.disabled=true;
   const pid=uid('p');
   const ok=await W(()=>Store.set('petition/'+pid,{cid:CUR.cid,...c,img:CUR.imgs.pt||'',reason,status:'wait',...stamp(),at:Date.now()}));
@@ -2483,6 +2501,7 @@ document.addEventListener('keydown',e=>{
   e.preventDefault();const f=ACT[el.dataset.a];if(f)f(el,e);
 });
 document.addEventListener('submit',e=>{const f=e.target.closest('[data-f]');if(!f)return;e.preventDefault();const h=FORM[f.dataset.f];if(h)h(f)});
+ACT['v-col']=el=>{CUR.vCol=+el.dataset.v;$$('#v-cols .gcap').forEach(b=>b.classList.toggle('on',b===el))};
 
 /* =========================================================
    💬 단체 대화 · 📥 제출함 (호스트·게스트 공용)
@@ -2492,7 +2511,8 @@ function hhmm(t){const d=new Date(t);return String(d.getHours()).padStart(2,'0')
 /* =========================================================
    💬 단체 대화 — 모임 전체가 함께 쓰는 대화방 (호스트는 HOST 배지 + 📢 공지)
    ========================================================= */
-const QUICK=['👍','❤️','😂','😮','😢','🙏','👏','🔥','📚','💊'];
+const QUICK=['😄','👍','❤️','😂','🙏','🙇','😭','😢','😮','👏','🔥','🥰','📚','💊'];
+const QUICK_N={'😄':'환한 웃음','🙏':'감사해요','🙇':'미안해요','😭':'엉엉 울어요','😢':'슬퍼요','👍':'좋아요','❤️':'사랑해요','😂':'웃겨요','😮':'놀라워요','👏':'박수','🔥':'멋져요','🥰':'감동이에요','📚':'책','💊':'처방'};
 function chats(){return list('chat').sort((a,b)=>(a.at||0)-(b.at||0))}
 function talkSeenKey(){return 'rx-talk-'+CUR.cid}
 function talkUnread(){if(ROLE.host||!ME)return 0;const s=LS.get(talkSeenKey(),0);return chats().filter(m=>m.by!==ME.by&&(m.at||0)>s).length}
@@ -2546,7 +2566,7 @@ function vTalk(){
     <div id="talk-nt">${talkNotice()}</div>
     <div id="talk-sb">${talkSelBar()}</div>
     <div class="talk-list" id="talk-list" aria-live="polite">${talkMsgs()}</div>
-    <div class="quick" aria-label="빠른 이모지">${QUICK.map(e=>`<button type="button" data-a="talk-quick" data-v="${e}" aria-label="${e} 넣기" onpointerdown="event.preventDefault()">${e}</button>`).join('')}</div>
+    <div class="quick" aria-label="빠른 이모지">${QUICK.map(e=>`<button type="button" data-a="talk-quick" data-v="${e}" title="${QUICK_N[e]||e}" aria-label="${QUICK_N[e]||e} 넣기" onpointerdown="event.preventDefault()">${e}</button>`).join('')}</div>
     <form class="talk-in" data-f="talk">${imgPick('talk','📷')}<input class="in" id="talk-in" maxlength="500" placeholder="${ROLE.host?'호스트로 메시지 보내기':'메시지를 입력하세요'}" autocomplete="off" aria-label="메시지"><button class="btn th">보내기</button></form>
   </section>`;
 }
@@ -2950,7 +2970,7 @@ ACT['h-lock']=()=>{LS.set('rx-h-key','');location.reload()};
 ACT['t-new']=()=>{CUR.pid=null;delete CUR.imgs.pt;openModal({cls:'th-court',html:caseForm({head:'⚖️ 새 사건 접수',btn:'🔨 바로 개정! 재판 시작하기',act:'t-save',alt:'<button class="btn wide" data-a="t-file">📁 접수만 하기 (폴더만 만들고 나중에 개정)</button>'})})};
 /* 호스트가 접수만: 신청서 폴더를 만들어 둠 */
 ACT['t-file']=async el=>{
-  const c=readCase();if(!c.who||!c.work||!c.charge){toast('피고인·제목·공소 사실을 모두 적어 주세요.');return}
+  const c=readCase();if(!c.who||!c.charge){toast('피고인과 공소 사실을 적어 주세요.');return}
   el.disabled=true;const id=uid('p');
   const ok=await hW(()=>Store.set('petition/'+id,{cid:CUR.cid,...c,img:CUR.imgs.pt||'',reason:'',status:'wait',...HOST_ID,at:Date.now()}));
   el.disabled=false;
@@ -2965,7 +2985,7 @@ ACT['pt-reject']=el=>{const id=el.dataset.id;
   $('#pt-no',m).onclick=async()=>{const memo=T($('#pt-memo').value);closeModal();await hW(()=>Store.update('petition/'+id,{status:'reject',memo}));toast('반려했어요.')}};
 ACT['t-save']=async el=>{
   const c=readCase();
-  if(!c.who||!c.work||!c.charge){toast('피고인·제목·공소 사실을 모두 적어 주세요.');return}
+  if(!c.who||!c.charge){toast('피고인과 공소 사실을 적어 주세요.');return}
   const now=Date.now();const id=uid('t');
   const old=CUR.pid&&Store.peek('petition/'+CUR.pid);const pid=CUR.pid||uid('p');
   const img=(old&&old.img)||CUR.imgs.pt||'';
