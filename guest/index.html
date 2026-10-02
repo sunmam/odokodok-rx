@@ -1154,6 +1154,12 @@ textarea.in{resize:vertical;line-height:1.6}
 .rct{min-width:38px;justify-content:center}
 .vc-lock .gcap.lk{flex:0 0 auto;animation:jiggle 2.4s ease-in-out infinite}
 .vc-lock span:nth-child(2){font-size:14px;line-height:1.35}
+/* 재판 끝나는 때 고르기 · 기한 없음 표시 */
+.endmode{display:flex;gap:8px;flex-wrap:wrap}
+.em-opt{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);border-radius:12px;padding:6px 12px;background:#fff;cursor:pointer;font-family:var(--ui);font-size:15px;box-shadow:0 3px 0 var(--ink)}
+.em-opt:has(input:checked){background:var(--lemon)}
+.em-opt input{accent-color:var(--indigo);width:18px;height:18px}
+.noend{font-family:var(--display);font-size:26px;color:var(--gold);text-shadow:2px 2px 0 var(--ink)}
 
 </style>
 </head>
@@ -1166,7 +1172,7 @@ textarea.in{resize:vertical;line-height:1.6}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261002154853";
+const BUILD = "20261002160745";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1234,8 +1240,8 @@ const CASES=[
  {emo:'☀️',who:'뫼르소',work:'이방인',author:'알베르 카뮈',charge:'어머니의 장례식에서 눈물 한 방울 흘리지 않았고, 햇빛이 눈부셨다는 이유로 사람을 쏘았다.'},
  {emo:'🎩',who:'허생',work:'허생전',author:'박지원',charge:'과일과 말총을 모조리 사들여 값을 올리는 매점매석으로 큰돈을 벌었다.'}
 ];
-const COURT_EMO=['🥂','🪲','🌪️','💰','☀️','🎩','👑','🗡️','🌹','🎭','🦹','🧓','👩‍🦰','🧑‍🎤','🐺','💍'];
-const COURT_EMO_N={'🥂':'축배·화려함','🪲':'벌레·변신','🌪️':'폭풍·격정','💰':'돈·욕심','☀️':'햇빛·충동','🎩':'신사·꾀','👑':'왕·권력','🗡️':'칼·폭력','🌹':'장미·사랑','🎭':'가면·두 얼굴','🦹':'악당','🧓':'노인','👩‍🦰':'여성 인물','🧑‍🎤':'예술가','🐺':'늑대·야성','💍':'반지·결혼'};
+const COURT_EMO=['🥂','🪲','🌪️','💰','☀️','🎩','👑','🗡️','🌹','🎭','🦹','🧓','👩‍🦰','🧑‍🎤','🐺','💍','⚖️'];
+const COURT_EMO_N={'🥂':'축배·화려함','🪲':'벌레·변신','🌪️':'폭풍·격정','💰':'돈·욕심','☀️':'햇빛·충동','🎩':'신사·꾀','👑':'왕·권력','🗡️':'칼·폭력','🌹':'장미·사랑','🎭':'가면·두 얼굴','🦹':'악당','🧓':'노인','👩‍🦰':'여성 인물','🧑‍🎤':'예술가','🐺':'늑대·야성','💍':'반지·결혼','⚖️':'기타'};
 
 /* ---------- 한국어 조사 ---------- */
 function hasBatchim(s){
@@ -2175,7 +2181,22 @@ function myTeam(tid){return ME?Store.peek('team/'+tid+'-'+ME.by):null}
 function score(tid){const s={def:0,pro:0,dn:0,pn:0};pleasOf(tid).forEach(p=>{if(!SIDES[p.side])return;s[p.side]+=1+L(p.id).n;p.side==='def'?s.dn++:s.pn++});return s}
 function verdict(s){return s.def>s.pro?{k:'def',t:'무죄!',s:'🛡️ 변호인단 승리'}:s.pro>s.def?{k:'pro',t:'유죄!',s:'⚔️ 검사단 승리'}:{k:'tie',t:'판결 보류',s:'⚖️ 팽팽한 무승부'}}
 function caseNo(t,ts){const i=ts.findIndex(x=>x.id===t.id);return new Date(t.start||Date.now()).getFullYear()+'-'+String(i+1).padStart(3,'0')}
-function fmtLeft(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return h?`${h}시간 ${m}분`:`${m}분 ${String(s).padStart(2,'0')}초`}
+function fmtLeft(ms){ms=Math.max(0,ms);const d=Math.floor(ms/86400000),h=Math.floor(ms%86400000/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return d?`${d}일 ${h}시간`:h?`${h}시간 ${m}분`:`${m}분 ${String(s).padStart(2,'0')}초`}
+/* 남은 시간: 기한 없음 · 하루 넘게 남음(날짜) · 하루 안(넘김 시계) */
+function leftTag(t){return t.noEnd?'♾️ <b>기한 없음</b>':`⏳ <b data-cd="${t.end}">${fmtLeft(t.end-Date.now())}</b>`}
+function bigLeft(t){
+  if(t.noEnd)return `<small>⚖️ 판결 시각</small><div class="noend">♾️ 기한 없음</div><small>호스트가 판결할 때까지 이어져요</small>`;
+  if(t.end-Date.now()>=86400000)return `<small>📅 판결 날짜</small><div class="noend">${fmtDate(t.end)}</div><small>⏳ <b data-cd="${t.end}">${fmtLeft(t.end-Date.now())}</b> 남음</small>`;
+  return `<small>⏳ 판결까지 남은 시간</small><div class="flip" data-cdbig="${t.end}">${flipHTML(t.end-Date.now())}</div><small>${fmtDate(t.end)} 판결</small>`;
+}
+/* 개정할 때 재판 끝나는 때: 📅 달력에서 날짜·시간 · ♾️ 기한 없음 */
+function endPicker(){
+  const d=new Date(Date.now()+86400000);const p=n=>String(n).padStart(2,'0');
+  const v=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `<div class="fld">재판 끝나는 때<div class="endmode"><label class="em-opt"><input type="radio" name="t-endmode" value="date" checked> 📅 날짜·시간 정하기</label><label class="em-opt"><input type="radio" name="t-endmode" value="none"> ♾️ 기한 없음</label></div>
+    <input class="in" type="datetime-local" id="t-end" value="${v}"><small class="muted" id="t-end-h">달력에서 판결할 날짜와 시간을 골라요 (기본: 지금부터 하루 뒤)</small></div>`;
+}
+document.addEventListener("change",e=>{const el=e.target;if(el.name!=="t-endmode")return;const none=el.value==='none';const i=$('#t-end'),h=$('#t-end-h');if(i){i.hidden=none}if(h)h.textContent=none?'호스트가 "🔔 지금 판결하기"를 누를 때까지 재판이 이어져요':'달력에서 판결할 날짜와 시간을 골라요'});
 function flipHTML(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);const p=n=>String(n).padStart(2,'0');return [p(h),p(m),p(s)].map(x=>[...x].map(c=>`<span>${c}</span>`).join('')).join('<i>:</i>')}
 function artBalance(tilt,s,idle){
   return `<div class="balance${idle?' idle':''}" style="--t:${tilt}deg" aria-hidden="true"><div class="b-post"></div><div class="b-base"></div>
@@ -2233,7 +2254,7 @@ function caseForm({head,btn,act,data={},guest=false,alt=''}){
       <label class="fld">공소 사실 (논란이 되는 행동) *<textarea class="in quote-in" id="t-charge" rows="3" maxlength="200" placeholder="피고인이 무엇을 했는지 한두 문장으로">${esc(data.charge||'')}</textarea></label>
       <div class="fld">장면 사진 <small class="muted">(선택 · 사건이 일어난 장면, 인물 사진 등)</small>${data.img?`<small class="muted">신청서에 붙은 사진이 함께 들어가요</small>`:imgPick('pt')}</div>
       ${guest?`<label class="fld">신청 이유<input class="in" id="t-reason" maxlength="120" placeholder="예: 데이지가 정말 나쁜 사람인지 친구들과 따져 보고 싶어요"></label>`
-        :`<label class="fld">재판 시간<select class="in" id="t-dur"><option value="10">10분 (수업 중 빠른 공방)</option><option value="30">30분</option><option value="60">1시간</option><option value="180">3시간</option><option value="1440" selected>24시간 (기본)</option><option value="4320">3일</option></select></label>`}
+        :endPicker()}
       <button class="btn indigo big wide" data-a="${act}">${btn}</button>
       ${alt||''}
     </div>`;
@@ -2318,7 +2339,7 @@ function folderNow(f){
     const s=tState(t),sc=score(t.id),tm=teamsOf(t.id),my=myTeam(t.id);
     const dN=tm.filter(x=>x.side==='def').length,pN=tm.filter(x=>x.side==='pro').length;
     if(s==='live')return `<section class="now live"><div class="now-t"><b>⚖️ 지금 재판 중이에요</b>
-        <span>⏳ 남은 시간 <b data-cd="${t.end}">${fmtLeft(t.end-Date.now())}</b> · 🛡️ ${dN}명 vs ⚔️ ${pN}명</span>
+        <span>${leftTag(t)} · 🛡️ ${dN}명 vs ⚔️ ${pN}명</span>
         ${my?`<span>⭐ 나는 <b>${SIDES[my.side].n}</b></span>`:ROLE.host?'':'<span>들어가서 변호인단이나 검사단을 골라요</span>'}</div>
       <button class="btn indigo big" data-a="t-open" data-id="${t.id}">${ROLE.host?'📂 재판 보기':my?'⚖️ 재판 이어서 하기':'⚖️ 재판 입장하기'}</button></section>`;
     if(s==='wait')return `<section class="now"><div class="now-t"><b>🕐 곧 재판이 열려요</b><span>${fmtDate(t.start)} 개정</span></div><button class="btn indigo big" data-a="t-open" data-id="${t.id}">📂 사건 파일 보기</button></section>`;
@@ -2366,7 +2387,7 @@ function caseCard(t,ts){
     <p class="case-charge">${esc(t.charge)}</p>
     <div class="tug-l"><span style="color:var(--sky-d)">🛡️ ${s.def}</span><span style="color:var(--coral-d)">${s.pro} ⚔️</span></div>
     <div class="tug"><i class="d" style="width:${dp}%"></i><i class="p"></i></div>
-    <div class="case-ft">${st==='live'?`<span class="st live">● 재판 중</span><span class="grow"></span>⏳ <b data-cd="${t.end}">${fmtLeft(t.end-Date.now())}</b>`
+    <div class="case-ft">${st==='live'?`<span class="st live">● 재판 중</span><span class="grow"></span>${leftTag(t)}`
       :st==='wait'?`<span class="st wait">개정 전</span><span class="grow"></span>🕐 ${fmtDate(t.start)} 개정`
       :`<span class="st done">🔔 판결</span><span class="grow"></span><b>${v.t}</b> <span class="muted">${v.s}</span>`}</div>
   </article>`;
@@ -2384,7 +2405,7 @@ function vTrial(id){
     <div><span class="case-no">사건번호 ${caseNo(t,ts)} · ${st==='live'?'재판 진행 중':st==='wait'?'개정 전':'판결 완료'}</span>
       <div class="ch-who"><span class="ch-emo">${esc(t.emo||'⚖️')}</span><div><small>피고인</small><h1>${esc(t.who)}</h1><p>${workSrc(t)}</p></div></div>
       <div class="charge"><b>공소 사실</b>${esc(t.charge)}</div>${imgHTML(t.img,{cls:'ch-img'})}</div>
-    <div class="ch-r">${st==='live'?`<small>⏳ 판결까지 남은 시간</small><div class="flip" data-cdbig="${t.end}">${flipHTML(t.end-Date.now())}</div><small>${fmtDate(t.end)} 판결</small>`
+    <div class="ch-r">${st==='live'?bigLeft(t)
       :st==='wait'?`<small>🕐 개정 시각</small><div class="flip">${flipHTML(t.start-Date.now())}</div>`
       :`<div class="verdict ${v.k}"><span class="vd-g">🔨</span><div><small>최종 판결</small><h2>${v.t}</h2><p>${v.s}</p></div></div>`}</div>
   </section>
@@ -2395,7 +2416,7 @@ function vTrial(id){
   </section>
   <p class="muted" style="text-align:center;font-family:var(--ui);margin:0">점수 = 변론 1개당 1점 + 🔨인정 1개당 1점 · 무거운 쪽으로 저울이 기울어요</p>
   ${ROLE.host?`<div class="hostbar">🎛️ 호스트
-     ${st==='done'?`<button class="btn sm mint" data-a="t-reopen" data-id="${id}">▶ 1시간 다시 열기</button>`:`<button class="btn sm" data-a="t-extend" data-id="${id}">⏱ 1시간 연장</button><button class="btn sm coral" data-a="t-close" data-id="${id}">🔔 지금 판결하기</button>`}
+     ${st==='done'?`<button class="btn sm mint" data-a="t-reopen" data-id="${id}">▶ 1시간 다시 열기</button>`:`${t.noEnd?'':`<button class="btn sm" data-a="t-extend" data-id="${id}">⏱ 1시간 연장</button>`}<button class="btn sm coral" data-a="t-close" data-id="${id}">🔔 지금 판결하기</button>`}
      <span class="grow"></span>${delBtn(t,'trial/'+id,false)}</div>`:''}
   ${!ROLE.host&&st==='live'&&!my?`<div class="teampick"><button class="tp def" data-a="t-join" data-id="${id}" data-s="def"><span>🛡️</span><b>변호인단 합류</b><small>피고인을 지켜라!</small></button><span class="vs">VS</span>
      <button class="tp pro" data-a="t-join" data-id="${id}" data-s="pro"><span>⚔️</span><b>검사단 합류</b><small>죄를 밝혀라!</small></button></div>`:''}
