@@ -1037,6 +1037,44 @@ textarea.in{resize:vertical;line-height:1.6}
 }
 @media (max-width:760px){#w-cnt{display:none}.compose .row{flex-wrap:nowrap}.compose .row .btn.big{padding:9px 14px}}
 
+/* 처방전 약사 한 마디: 무엇을 쓸지 크게 안내 */
+.rx-guide{margin:0;font-family:var(--ui);font-size:18px;line-height:1.5;color:var(--mint-d);background:#E6FBF3;border:2px dashed var(--mint);border-radius:14px;padding:10px 14px;word-break:keep-all}
+.rx-guide b{font-weight:400;color:var(--ink);background:linear-gradient(transparent 55%,rgba(35,191,152,.3) 55%)}
+.rx-big{font-size:17px!important;min-height:120px}
+@media (max-width:760px){.rx-guide{font-size:16px}}
+
+/* 자판기 고르기: 나란히 같은 크기 (세로 카드) */
+.vmodes{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+.vmodes.n1{grid-template-columns:1fr}
+.vmodes.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.vmodes.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.vmode{flex-direction:column;justify-content:flex-start;text-align:center;gap:6px;padding:14px 10px 12px;position:relative}
+.vmode .vmo-t{justify-items:center}
+.vmode .vmo-t small{white-space:normal;overflow:visible}
+.vmode em{position:absolute;top:8px;right:8px;min-width:28px;height:28px;font-size:15px;border-radius:10px}
+@media (max-width:760px){
+  .vmodes.n2,.vmodes.n3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vmodes.n3 .vmode.add{grid-column:1/-1;flex-direction:row;text-align:left}
+  .vmodes.n3 .vmode.add .vmo-t{justify-items:start}
+  .vmode{padding:12px 6px 10px}
+  .vmo-t b{font-size:14px}
+  .vmo-t small{font-size:11.5px}
+}
+/* 고른 자판기 판: 넣기 · 뽑기 · 나가기 */
+.vpanel{margin-top:12px;padding:14px;border:var(--line);border-radius:20px;box-shadow:0 5px 0 var(--ink);display:grid;gap:12px}
+.vpanel.free{background:linear-gradient(135deg,#FFE3EE,#fff)}
+.vpanel.pick{background:linear-gradient(135deg,#E6DEFF,#fff)}
+.vp-hd{display:flex;align-items:center;gap:12px}
+.vp-ic{font-size:28px}
+.vp-t{display:grid;gap:2px;min-width:0}
+.vp-t b{font-family:var(--display);font-weight:400;font-size:20px}
+.vp-t span{font-family:var(--ui)}
+.vp-t small{color:var(--muted)}
+.vp-act{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.vp-note{font-family:var(--ui);font-size:14px;flex:1}
+.vp-out{margin-left:auto}
+@media (max-width:760px){.vp-act .btn.big{flex:1 1 auto;font-size:15px;padding:10px 12px}.vp-out{margin-left:0}}
+
 </style>
 </head>
 <body>
@@ -1048,7 +1086,7 @@ textarea.in{resize:vertical;line-height:1.6}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261002083523";
+const BUILD = "20261002091804";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1624,12 +1662,11 @@ function slip(r,w,wid){
 }
 function rxComposer(wid){
   return `<div class="card compose" style="margin-top:20px">
-    <div class="cp-hd"><span class="cp-ic">💊</span><h3>처방전 쓰기</h3><span class="muted" style="font-size:14px">매체 속 한 구절·대사·명언·이미지, 혹은 나의 말</span></div>
-    ${mediaFields('rx',{page:true,need:false})}
-    <label class="fld">처방 내용 *<textarea class="in quote-in" id="rx-quote" rows="3" maxlength="400" data-count="rx-qc" placeholder="한 구절·대사·명언을 그대로 옮겨 적거나, 나의 말로 처방해 주세요"></textarea><span class="cnt" id="rx-qc" style="justify-self:end">0/400</span></label>
+    <div class="cp-hd"><span class="cp-ic">💊</span><h3>처방전 약사 한 마디</h3></div>
+    <p class="rx-guide">게스트가 하고 싶은 말, 매체 속 한 구절, 명언, 이미지 등을 <b>정성껏 처방해 주세요.</b></p>
+    <textarea class="in quote-in rx-big" id="rx-quote" rows="4" maxlength="400" data-count="rx-qc" aria-label="처방 내용" placeholder="여기에 처방을 적어 주세요 💊"></textarea><span class="cnt" id="rx-qc" style="justify-self:end;margin-top:-6px">0/400</span>
     ${imgPick('rx','📷 이미지로 처방하기')}
     <div class="fld">복용법<div class="dosepick">${DOSE.map(d=>`<button class="tchip${CUR.dose===d.k?' on':''}" style="--c:var(--mint)" data-a="rx-dose" data-v="${d.k}">${d.e} ${d.n}</button>`).join('')}</div></div>
-    <label class="fld">약사 한마디<input class="in" id="rx-note" maxlength="120" placeholder="예: 저도 이 문장 덕분에 힘든 시기를 버텼어요"></label>
     <button class="btn mint big wide" data-a="rx-post" data-w="${wid}">💊 처방전 발행하기</button>
   </div>`;
 }
@@ -1637,13 +1674,12 @@ ACT['rx-dose']=el=>{CUR.dose=el.dataset.v;$$('.dosepick .tchip').forEach(b=>b.cl
 ACT['rx-post']=async el=>{
   if(!ROLE.host&&hostOnly())return;
   const v=id=>T($('#'+id).value);
-  const m=readMedia('rx'),quote=v('rx-quote'),img=CUR.imgs.rx||'';
-  if(!m.book&&!['mine','quote'].includes(m.media)){toast('처방할 매체의 제목을 적어 주세요. (나의 말·명언은 비워도 돼요)');$('#rx-book').focus();return}
+  const quote=v('rx-quote'),img=CUR.imgs.rx||'';
   if(!quote&&!img){toast('처방 내용을 쓰거나 이미지를 붙여 주세요.');$('#rx-quote').focus();return}
   el.disabled=true;
-  const ok=await W(()=>Store.set('rx/'+uid(),{cid:CUR.cid,worry:el.dataset.w,...m,quote,img,dose:CUR.dose,note:v('rx-note'),...stamp(),at:Date.now()}));
+  const ok=await W(()=>Store.set('rx/'+uid(),{cid:CUR.cid,worry:el.dataset.w,quote,img,dose:CUR.dose,...stamp(),at:Date.now()}));
   el.disabled=false;
-  if(ok!==false){clearMedia('rx');takeImg('rx');['rx-quote','rx-note'].forEach(id=>$('#'+id).value='');dispense();pop('처방 완료!');toast('처방전을 발행했어요. 이어서 또 처방할 수 있어요 💊');refreshModal();const b=$('#rx-book');if(b&&matchMedia('(pointer:fine)').matches)b.focus()}
+  if(ok!==false){takeImg('rx');$('#rx-quote').value='';updCount($('#rx-quote'));dispense();pop('처방 완료!');toast('처방전을 발행했어요. 이어서 또 처방할 수 있어요 💊');refreshModal();const b=$('#rx-quote');if(b&&matchMedia('(pointer:fine)').matches)b.focus()}
 };
 ACT['w-solve']=async el=>{const p='worry/'+el.dataset.id;const w=Store.peek(p);if(!w)return;const on=!w.solved;await W(()=>Store.update(p,{solved:on}));if(on){confetti(['#FFD84D','#FFB547','#23BF98','#FF6FA3']);pop('다 나았어요!')}};
 ACT['w-best']=async el=>{const p='worry/'+el.dataset.w;const w=Store.peek(p);if(!w)return;const id=el.dataset.id;await W(()=>Store.update(p,{best:w.best===id?'':id}));if(w.best!==id)pop('명약 지정!')};
@@ -1710,16 +1746,14 @@ function vVend(){
     <div class="sh-t"><span class="sh-k">BLIND SENTENCE MACHINE</span><h1>블라인드 <br>문장 자판기</h1>
       ${pk?heroLines(['호스트가 정한 <b>📌 지정 작품</b> 속 | <b>치명적인 한 문장</b>과 추천 이유만!','마음에 드는 문장을 <b>뽑으면</b> | 추천인과 <b>1:1 대화방</b>이 열려요.'])
         :heroLines(['출처는 <b>꽁꽁 숨기고</b>, | <b>치명적인 한 문장</b>과 추천 이유만!','마음에 드는 문장을 <b>뽑으면</b> | <b>매체 종류와 제목</b>이 공개되고,','추천인과 <b>1:1 대화방</b>이 열려요.'])}
-      <div class="sh-act">${ROLE.host?'':`<button class="btn pink big" data-a="v-new">🎁 내 문장 넣기</button><button class="btn lemon big" data-a="v-rand">🎲 아무거나 뽑기</button>`}
-        <button class="btn big inbox" data-a="rooms">📮 1:1 대화방${un?`<b class="nb">${un}</b>`:''}</button></div></div>
+      <div class="sh-act"><button class="btn big inbox" data-a="rooms">📮 1:1 대화방${un?`<b class="nb">${un}</b>`:''}</button></div></div>
   </section>
-  <div class="vmodes" role="tablist" aria-label="자판기 고르기">
+  <div class="vmodes n${Math.min(picks.length+1+(ROLE.host?1:0),3)}" role="tablist" aria-label="자판기 고르기">
     <button class="vmode free${mode==='free'?' on':''}" data-a="v-mode" data-v="free" role="tab" aria-selected="${mode==='free'}"><span class="vmo-ic">🎲</span><span class="vmo-t"><b>자유 문장 자판기</b><small>아무 매체 · 출처는 뽑을 때 공개</small></span><em>${all.filter(v=>!v.pick).length}</em></button>
     ${picks.map(p=>`<button class="vmode pick${mode===p.id?' on':''}${p.archived?' ended':''}" data-a="v-mode" data-v="${p.id}" role="tab" aria-selected="${mode===p.id}"><span class="vmo-ic">📌</span><span class="vmo-t"><b>지정 작품 자판기${p.archived?' (끝남)':''}</b><small>${bookTxt(pickBook(p))}</small></span><em>${all.filter(v=>v.pick===p.id).length}</em></button>`).join('')}
     ${ROLE.host?'<button class="vmode add" data-a="vp-new"><span class="vmo-ic">＋</span><span class="vmo-t"><b>지정 작품 정하기</b><small>이 작품 속 문장만 넣고 뽑게 해요</small></span></button>':''}
   </div>
-  ${pk?`<div class="pickinfo"><span>📌</span><div><b>${bookTxt(pickBook(pk))}</b><small>이 자판기에는 이 작품 속 문장만 넣고 뽑아요.${pk.note?' · 💬 '+esc(pk.note):''}</small></div>
-    ${ROLE.host?`<span class="grow"></span><button class="btn sm" data-a="vp-end" data-id="${pk.id}">${pk.archived?'▶ 다시 열기':'⏹ 끝내기'}</button><button class="btn sm ghost" data-a="vp-del" data-id="${pk.id}">🗑</button>`:''}</div>`:''}
+  ${vPanel(pk)}
   <div class="filters">${F.map(([k,n,c])=>`<button class="fchip${CUR.vF===k?' on':''}" data-a="v-f" data-v="${k}">${n}<small>${c}</small></button>`).join('')}</div>
   <div class="vgrid">${show.map(v=>vCard(v,no[v.id])).join('')||empty(pk?'📌':'🎰',pk?'아직 이 작품의 문장이 없어요':'자판기가 아직 비어 있어요',ROLE.host?'게스트가 문장을 넣으면 여기에 나타나요.':pk?'이 작품에서 밑줄 친 문장 하나를 넣어 보세요!':'밑줄 친 문장 하나를 캡슐에 담아 넣어 보세요!')}</div>`;
 }
@@ -2279,6 +2313,15 @@ document.addEventListener('keydown',e=>{
   e.preventDefault();const f=ACT[el.dataset.a];if(f)f(el,e);
 });
 document.addEventListener('submit',e=>{const f=e.target.closest('[data-f]');if(!f)return;e.preventDefault();const h=FORM[f.dataset.f];if(h)h(f)});
+/* 고른 자판기 바로 아래: 그 자판기에서 할 수 있는 일 (넣기 · 뽑기 · 나가기) */
+function vPanel(pk){
+  const head=pk?`<div class="vp-hd"><span class="vp-ic">📌</span><div class="vp-t"><b>지정 작품 자판기</b><span>${bookTxt(pickBook(pk))}</span><small>이 작품 속 문장만 넣고 뽑아요.${pk.note?' · 💬 '+esc(pk.note):''}</small></div></div>`
+    :`<div class="vp-hd"><span class="vp-ic">🎲</span><div class="vp-t"><b>자유 문장 자판기</b><small>아무 매체 속 문장 · 출처는 뽑을 때 공개돼요.</small></div></div>`;
+  const acts=ROLE.host
+    ?`<span class="muted vp-note">문장 넣기·뽑기는 게스트 화면에서 해요.</span>${pk?`<button class="btn sm" data-a="vp-end" data-id="${pk.id}">${pk.archived?'▶ 다시 열기':'⏹ 끝내기'}</button><button class="btn sm ghost" data-a="vp-del" data-id="${pk.id}">🗑</button>`:''}`
+    :`<button class="btn pink big" data-a="v-new">🎁 ${pk?'이 작품 문장 넣기':'내 문장 넣기'}</button><button class="btn lemon big" data-a="v-rand">🎲 아무거나 뽑기</button>`;
+  return `<section class="vpanel${pk?' pick':' free'}">${head}<div class="vp-act">${acts}${pk?'<button class="btn big vp-out" data-a="v-mode" data-v="free">← 나가기</button>':''}</div></section>`;
+}
 
 /* =========================================================
    💬 단체 대화 · 📥 제출함 (호스트·게스트 공용)
@@ -2606,16 +2649,15 @@ function vJoin(){
   const keep=id=>{const el=$('#'+id);return el?el.value:null};
   const all=classesSorted();
   if(G.cid&&!Store.peek('classes/'+G.cid)&&!G.lockCls)G.cid=null;
-  if(!G.cid&&all.length===1)G.cid=all[0].id;
   if(!G.cid){const last=LS.get('rx-g-last','');if(last&&Store.peek('classes/'+last))G.cid=last}
   const c=gCls(G.cid);
   const name=keep('g-name')??'';
   let body;
   if(!c&&!Store.loaded())body=`<div class="card waitcard"><span class="wait-emo">📡</span><b>모임을 불러오는 중…</b><p class="muted">인터넷 연결을 확인해 주세요. 연결되면 자동으로 나타나요.</p></div>`;
   else if(!c&&G.lockCls)body=`<div class="card waitcard"><span class="wait-emo">🔍</span><b>모임을 찾지 못했어요</b><p class="muted">주소가 맞는지 호스트에게 확인해 주세요.</p></div>`;
-  else if(!all.length)body=`<div class="card waitcard"><span class="wait-emo">⏳</span><b>아직 열린 모임이 없어요</b><p class="muted">호스트가 모임을 만들면 자동으로 나타나요.</p></div>`;
+  /* 모임은 호스트가 알려 준 주소(QR)로만 들어와요 — 게스트가 고르는 칸 없음 */
+  else if(!c)body=`<div class="card waitcard"><span class="wait-emo">📱</span><b>호스트가 알려 준 주소로 들어와 주세요</b><p class="muted">호스트 화면의 QR을 찍거나, 받은 주소를 누르면 우리 모임으로 바로 들어와요.</p></div>`;
   else body=`<div class="card join-card">
-    ${!G.lockCls&&all.length>1?`<label class="fld">우리 모임<select class="in" id="g-cls"><option value="">선택하세요</option>${all.map(x=>`<option value="${x.id}" ${x.id===G.cid?'selected':''}>${esc((x.emo||'')+' '+x.name)}</option>`).join('')}</select></label>`:''}
     ${c?`<div class="jcls" style="--c:${c.color||'#23BF98'}"><span class="jcls-e">${esc(c.emo||'📚')}</span><div><small>오늘의 모임</small><b>${esc(c.name)}</b></div></div>`:''}
     <label class="fld">이름(학번)<span class="name-wrap"><span class="name-ic">🪪</span><input class="in name-in" id="g-name" maxlength="30" autocomplete="off" placeholder="예: 김오독(10203)" value="${esc(name)}"></span>
       <small class="muted">🔒 호스트만 볼 수 있어요. 다른 사람에게는 아래 닉네임만 보여요.</small></label>
