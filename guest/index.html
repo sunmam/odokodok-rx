@@ -1132,7 +1132,7 @@ textarea.in{resize:vertical;line-height:1.6}
 .cmt-b p{margin:2px 0 0;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;font-size:14.5px}
 .cmt small{font-size:11px;color:var(--muted);white-space:nowrap;align-self:flex-end}
 .cmt-0{margin:0;font-size:13px}
-.cmt-in{display:flex;gap:6px}
+.cmt-in{display:grid;gap:7px}
 .cmt-in .in{flex:1;min-width:0;padding:7px 11px!important;font-size:14.5px!important}
 /* 자판기 카드: 잠금 / 공개 */
 .vc-lock{display:grid;gap:10px;padding:12px 14px;border:2px dashed rgba(35,28,61,.35);border-radius:14px;background:repeating-linear-gradient(-45deg,#F7F2FF 0 8px,#fff 8px 16px);font-family:var(--ui)}
@@ -1269,6 +1269,24 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
   .c2-side{padding:8px 4px}
   .c2-side>small{font-size:11.5px;word-break:keep-all}
 }
+/* 댓글 옆: 그 사람이 고른 이모티콘 */
+.cmt-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.cmt-e{display:inline-flex;gap:1px;align-items:center;background:#fff;border:1.5px solid rgba(35,28,61,.25);border-radius:999px;padding:0 7px;font-size:14px;line-height:1.5}
+/* 댓글마다 고르는 이모티콘 */
+.ce-row{display:flex;gap:4px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.ce{flex:0 0 auto;width:34px;height:34px;border:2px solid rgba(35,28,61,.22);border-radius:50%;background:#fff;font-size:18px;line-height:1;display:grid;place-items:center;padding:0;cursor:pointer;transition:transform .1s}
+.ce:hover{transform:translateY(-2px)}
+.ce.on{border-color:var(--ink);background:var(--lemon);box-shadow:0 2px 0 var(--ink);transform:scale(1.08)}
+.ce-in{display:flex;gap:6px;align-items:center}
+.ce-in .in{flex:1;min-width:0;padding:7px 11px!important;font-size:14.5px!important}
+.ce-sel{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:19px;border:2px dashed rgba(35,28,61,.3);opacity:.45}
+.ce-sel.on{opacity:1;border:2px solid var(--ink);background:var(--lemon)}
+.cmt>.cmt-e{flex:0 0 auto;align-self:center;font-size:22px;line-height:1;background:none;border:0;padding:0}
+/* 🔧 호스트용 방 고르기 (호스트 브라우저에서만) */
+.hpick{display:grid;gap:8px;padding:12px 14px;border:2.5px dashed var(--ink);background:#FFF8D6;width:min(100%,560px);margin:0 auto}
+.hp-hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.hp-hd b{font-family:var(--ui);font-weight:400}
+.hp-hd small{color:var(--muted);font-size:12.5px}
 
 </style>
 </head>
@@ -1281,7 +1299,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261003092528";
+const BUILD = "20261003100635";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1811,38 +1829,43 @@ ACT.hide=el=>{
   const t=el.dataset.t;
   W(()=>Store.set('hide/'+t+'-'+ME.by,{cid:CUR.cid,t,by:ME.by,at:Date.now()})).then(ok=>{if(ok!==false){toast('🗑 내 화면에서 지웠어요.');if(el.closest('#modal'))closeModal();rerender()}});
 };
-/* 이모티콘 + 이어 쓰는 댓글 */
-/* 순서를 바꾸면 이미 누른 이모티콘이 섞여요 — 새 이모티콘은 꼭 뒤에 덧붙이기 */
+/* 댓글 + 댓글마다 고르는 이모티콘 (이모티콘 하나 = 댓글 하나에 붙어요) */
+/* 순서를 바꾸면 이미 고른 이모티콘이 섞여요 — 새 이모티콘은 꼭 뒤에 덧붙이기 */
 const REACT=['❤️','👍','😂','😢','😮','👏','😄','🙏','🙇','😭','🥰','🔥','💯','🌿'];
 const REACT_N=['좋아요','최고','웃겨요','슬퍼요','놀라워요','박수','환한 웃음','감사해요','미안해요','엉엉 울어요','감동이에요','멋져요','완벽해요','힐링돼요'];
-function rcts(t){const out=REACT.map(()=>({n:0,mine:false}));for(const d of Object.values(Store.coll('rct'))){if(!d||d.cid!==CUR.cid||d.t!==t)continue;const o=out[d.i];if(o){o.n++;if(ME&&d.by===ME.by)o.mine=true}}return out}
 function cmtsOf(t){return list('cmt',c=>c.t===t).sort((a,b)=>(a.at||0)-(b.at||0))}
-function rctSum(t){return rcts(t).reduce((n,r)=>n+r.n,0)}
-function cmtForm(t){return `<form class="cmt-in" data-f="cmt" data-t="${t}"><input class="in" id="ci-${t}" maxlength="200" placeholder="댓글을 남겨요 (이어서 계속 쓸 수 있어요)" autocomplete="off" aria-label="댓글"><button class="btn sm th">등록</button></form>`}
+CUR.cmtE=CUR.cmtE||{};   // 댓글 칸마다 지금 고른 이모티콘 번호
+function cmtForm(t){const sel=CUR.cmtE[t];
+  return `<form class="cmt-in" data-f="cmt" data-t="${t}">
+    <div class="ce-row" role="group" aria-label="댓글에 붙일 이모티콘 고르기">${REACT.map((e,i)=>`<button type="button" class="ce${sel===i?' on':''}" data-a="ce" data-t="${t}" data-i="${i}" title="${REACT_N[i]}" aria-label="${REACT_N[i]}" aria-pressed="${sel===i}" onpointerdown="event.preventDefault()">${e}</button>`).join('')}</div>
+    <div class="ce-in"><span class="ce-sel${sel!=null?' on':''}" aria-hidden="true">${sel!=null?REACT[sel]:'🙂'}</span><input class="in" id="ci-${t}" maxlength="200" placeholder="이모티콘을 고르고 댓글을 남겨요" autocomplete="off" aria-label="댓글"><button class="btn sm th">등록</button></div>
+  </form>`}
+function cmtsHTML(t){
+  return cmtsOf(t).map(c=>{const e=REACT[c.e];
+    return `<div class="cmt">${avatar(c.char,'sm')}<div class="cmt-b"><div class="cmt-h"><b>${esc(c.nick)}${c.by==='host'?'<span class="hostb">HOST</span>':''}</b>${hostWho(c)}</div>${c.text?`<p>${esc(c.text)}</p>`:''}</div>${e?`<span class="cmt-e" title="${REACT_N[c.e]}">${e}</span>`:''}<small>${ago(c.at)}</small>${c._mine||ROLE.host?`<button class="tm-del" data-a="del" data-p="cmt/${c.id}" aria-label="댓글 지우기">✕</button>`:''}</div>`}).join('')||'<p class="muted cmt-0">첫 댓글을 남겨 보세요 💬</p>'}
 function talkBox(t,{form=true}={}){
-  const r=rcts(t);const cs=cmtsOf(t);
-  return `<div class="tbox">
-    <div class="rcts">${REACT.map((e,i)=>`<button class="rct${r[i].mine?' on':''}" data-a="rct" data-t="${t}" data-i="${i}" ${ROLE.host||!ME?'disabled':''} title="${REACT_N[i]}" aria-label="${REACT_N[i]} ${r[i].n}">${e}${r[i].n?`<small>${r[i].n}</small>`:''}</button>`).join('')}</div>
-    <div class="cmts">${cs.map(c=>`<div class="cmt">${avatar(c.char,'sm')}<div class="cmt-b"><b>${esc(c.nick)}${c.by==='host'?'<span class="hostb">HOST</span>':''}</b>${hostWho(c)}<p>${esc(c.text)}</p></div><small>${ago(c.at)}</small>${c._mine||ROLE.host?`<button class="tm-del" data-a="del" data-p="cmt/${c.id}" aria-label="댓글 지우기">✕</button>`:''}</div>`).join('')||'<p class="muted cmt-0">첫 댓글을 남겨 보세요 💬</p>'}</div>
+  return `<div class="tbox" data-t="${t}">
+    <div class="cmts">${cmtsHTML(t)}</div>
     ${form?cmtForm(t):''}
   </div>`;
 }
-ACT.rct=async el=>{
-  if(hostOnly())return;
-  const t=el.dataset.t,i=+el.dataset.i,p='rct/'+t+'-'+i+'-'+ME.by;
-  el.classList.add('shake');
-  await W(()=>Store.peek(p)?Store.del(p):Store.set(p,{cid:CUR.cid,t,i,by:ME.by,at:Date.now()}));
-  refreshModal();
-};
+/* 댓글 칸만 바로 다시 그리기 (쓰는 중이어도 새 댓글이 곧바로 보이게) */
+function patchTalk2(t){$$(`.tbox[data-t="${t}"] .cmts`).forEach(c=>{const end=c.scrollTop+c.clientHeight>=c.scrollHeight-4;c.innerHTML=cmtsHTML(t);if(end)c.scrollTop=c.scrollHeight})}
+/* 이모티콘 고르기: 다시 누르면 취소 · 화면 전체를 다시 그리지 않아 쓰던 글자·키보드 그대로 */
+function showCe(t){const sel=CUR.cmtE[t];
+  $$(`form.cmt-in[data-t="${t}"]`).forEach(f=>{f.querySelectorAll('.ce').forEach(b=>{const on=+b.dataset.i===sel;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+    const s=f.querySelector('.ce-sel');if(s){s.textContent=sel!=null?REACT[sel]:'🙂';s.classList.toggle('on',sel!=null)}})}
+ACT.ce=el=>{const t=el.dataset.t,i=+el.dataset.i;CUR.cmtE[t]=CUR.cmtE[t]===i?null:i;showCe(t)};
 FORM.cmt=async f=>{
   if(!ROLE.host&&hostOnly())return;
-  const inp=f.querySelector('input');const text=T(inp.value);if(!text)return;
-  const t=f.dataset.t;const inModal=!!f.closest('#modal');
-  inp.value='';if(!inModal)inp.blur();
-  const ok=await W(()=>Store.set('cmt/'+uid(),{cid:CUR.cid,t,text,...stamp(),at:Date.now()}));
-  if(ok===false){inp.value=text;return}
+  const inp=f.querySelector('input');const text=T(inp.value);const t=f.dataset.t;const e=CUR.cmtE[t];
+  if(!text&&e==null){toast('댓글을 쓰거나 이모티콘을 골라 주세요.');return}
+  const inModal=!!f.closest('#modal');
+  inp.value='';CUR.cmtE[t]=null;showCe(t);if(!inModal)inp.blur();
+  const ok=await W(()=>Store.set('cmt/'+uid(),{cid:CUR.cid,t,text,...(e!=null?{e}:{}),...stamp(),at:Date.now()}));
+  if(ok===false){inp.value=text;CUR.cmtE[t]=e;showCe(t);return}
   if(inModal){refreshModal();const box=$('#m-list .cmts');if(box)box.lastElementChild&&box.lastElementChild.scrollIntoView({block:'nearest'})}
-  else{rerender();const n=$('#ci-'+t);if(n&&matchMedia('(pointer:fine)').matches)n.focus()}
+  else{rerender();patchTalk2(t);const n=$('#ci-'+t);if(n&&matchMedia('(pointer:fine)').matches)n.focus()}
 };
 
 /* =========================================================
@@ -2148,7 +2171,7 @@ function vTeam(team,no,left){
 }
 function vCard(v,no){
   const c=CAPS[v.color||0];const info=vInfo(v);const open=!!info;const w=v._who||{};const room=roomOf(v.id);
-  const nC=cmtsOf(v.id).length,nR=rctSum(v.id);
+  const nC=cmtsOf(v.id).length;
   return `<article class="vcard${open?' got':''}${v._mine?' own':''}" id="vc-${v.id}" style="--c:${c}">
     <div class="vc-top"><span class="gball sm" style="--c:${c}"></span><span class="vc-no">CAPSULE #${String(no).padStart(3,'0')}</span><span class="grow"></span>${v.drawn?`<span class="hot">🔥 ${v.drawn}명이 뽑음</span>`:''}${trashBtn(v,'vend/'+v.id)}</div>
     <blockquote class="vq">${esc(v.line)}</blockquote>${imgHTML(v.img,{cls:'vc-img'})}
@@ -2157,7 +2180,7 @@ function vCard(v,no){
       ${talkBox(v.id)}`
       :`<div class="vc-lock">
           <div class="vl-msg"><span class="gcap lk" style="--c:${c}" aria-hidden="true"><i class="gc-t"></i><i class="gc-b"></i></span><span class="vl-t"><b>🔒 잠긴 캡슐</b><small>뽑으면 문장 정보와 추천 이유가 열려요</small></span></div>
-          <div class="vl-ft">${nC||nR?`<span class="vl-n">💬 ${nC} · ❤️ ${nR}</span>`:''}<button class="btn pink" data-a="v-draw" data-id="${v.id}">🎰 뽑기!</button></div>
+          <div class="vl-ft">${nC?`<span class="vl-n">💬 댓글 ${nC}</span>`:''}<button class="btn pink" data-a="v-draw" data-id="${v.id}">🎰 뽑기!</button></div>
         </div>`}
   </article>`;
 }
@@ -2232,12 +2255,12 @@ function vCopy(){
   ${show.length?`<div class="cork">${show.map(pola).join('')}</div>`:`<div class="wgrid">${empty('✍️','아직 게시판이 비어 있어요',ROLE.host?'게스트가 필사 사진을 올리면 여기에 붙어요.':'공책에 마음에 드는 부분을 옮겨 적고 사진을 찍어 올려 보세요.')}</div>`}`;
 }
 function pola(d){
-  const h=hashN(d.id);const r=((h%9)-4)*.9;const nC=cmtsOf(d.id).length,nR=rctSum(d.id);
+  const h=hashN(d.id);const r=((h%9)-4)*.9;const nC=cmtsOf(d.id).length;
   return `<article class="pola" style="--r:${r.toFixed(1)}deg;--tp:${TAPES[h%TAPES.length]}" data-a="c-open" data-id="${d.id}" tabindex="0" role="button" aria-label="필사 열기">
     <i class="tape"></i>
     <div class="pola-img">${d.img?`<img src="${d.img}" alt="필사 사진" loading="lazy">`:'<span style="font-size:40px">✍️</span>'}</div>
     <div class="pola-cap"><b>${srcLine(d)}</b>${d.thought?`<p>${esc(d.thought)}</p>`:""}</div>
-    <div class="pola-ft">${who(d)}<span class="grow"></span><span>💬 ${nC}</span><span>❤️ ${nR}</span>${trashBtn(d,'copy/'+d.id)}</div>
+    <div class="pola-ft">${who(d)}<span class="grow"></span><span>💬 ${nC}</span>${trashBtn(d,'copy/'+d.id)}</div>
   </article>`;
 }
 ACT['c-f']=el=>{CUR.cF=el.dataset.v;rerender()};
@@ -2923,11 +2946,21 @@ function hero(){
 }
 /* 같은 모임에서 이미 쓰고 있는 닉네임 (겹치면 게스트끼리 헷갈리니 고를 수 없게) */
 function takenNicks(cid){return new Set(Object.values(Store.coll('people')).filter(p=>p&&p.cid===cid).map(p=>p.nick))}
+/* 🔧 호스트용 방 고르기: 호스트 앱에 로그인해 둔 브라우저(같은 주소)에서만 보여요.
+   학생 기기에는 호스트 비밀번호가 없으니 늘 호스트가 준 방 하나만 보여요. */
+function isHostBrowser(){try{return !!LS.get('rx-h-key','')}catch(e){return false}}
+function hostPickHTML(cur){
+  if(!isHostBrowser())return '';
+  const cs=classesSorted();if(!cs.length)return '';
+  return `<div class="card hpick"><div class="hp-hd"><b>🔧 호스트용 방 고르기</b><small>호스트로 로그인한 이 브라우저에서만 보여요</small></div>
+    <select class="in" id="g-hpick" aria-label="게스트 화면으로 볼 방">${cur?'':'<option value="">방을 골라요</option>'}${cs.map(c=>`<option value="${c.id}" ${c.id===cur?'selected':''}>${esc(c.emo||'📚')} ${esc(c.name)}</option>`).join('')}</select></div>`;
+}
+document.addEventListener('change',e=>{if(e.target.id==='g-hpick'&&e.target.value)location.hash='c-'+e.target.value});   // hashchange → 그 방으로 새로 열기
 function vJoin(){
   const keep=id=>{const el=$('#'+id);return el?el.value:null};
   const all=classesSorted();
   if(G.cid&&!Store.peek('classes/'+G.cid)&&!G.lockCls)G.cid=null;
-  if(!G.cid){const last=LS.get('rx-g-last','');if(last&&Store.peek('classes/'+last))G.cid=last}
+  if(!G.cid&&!G.noAuto){const last=LS.get('rx-g-last','');if(last&&Store.peek('classes/'+last))G.cid=last}
   const c=gCls(G.cid);
   const name=keep('g-name')??'';
   const taken=c?takenNicks(c.id):new Set();
@@ -2951,7 +2984,7 @@ function vJoin(){
     <button class="btn coral big wide joinbtn" data-a="g-join">입장하기 ▶</button>
     <p class="hint">같은 이름(학번)으로 다시 들어오면 내 글과 대화방이 그대로 이어져요.</p>
   </div>`;
-  app.innerHTML=`${DECO}<div class="jwrap">${hero()}${body}
+  app.innerHTML=`${DECO}<div class="jwrap">${hero()}${hostPickHTML(c&&c.id)}${body}
     ${LOCAL?'<p class="muted" style="font-size:13px;text-align:center">체험 모드: 이 브라우저에만 저장돼요.</p>':''}</div>`;
   noFill(app);
   document.body.className='th-rx';
@@ -3038,6 +3071,9 @@ async function startGuest(){
   await Store.init({poll:3500,token:s?s.tok:''});
   if(s&&(!Store.loaded()||(Store.peek('classes/'+s.cid)&&Store.peek('people/'+s.cid+'-'+s.by)))){ME=s;CUR.cid=s.cid}
   else if(s){delete all[cid];LS.set('rx-g-sess',all);Store.setTok('')}
+  /* 방 주소 없이 열었는데(첫 화면의 "게스트 입장" 등) 이 기기로 들어간 방이 여럿이면
+     → 아무 방에나 들어가지 않고, 다른 방 목록도 보여 주지 않고 "호스트가 알려 준 주소로" 안내 */
+  if(!G.lockCls&&joinedRooms().length>1){ME=null;CUR.cid=null;G.cid=null;G.noAuto=true;Store.setTok('')}
   buildIX();gRender();
   Store.on(()=>{
     buildIX();
@@ -3046,21 +3082,26 @@ async function startGuest(){
   });
 }
 startGuest();
+/* 같은 탭에 다른 방 주소(#c-…)를 붙여 넣으면 주소 끝만 바뀌어 페이지가 그대로 남아 있었음 → 새로 열기 */
+window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1);if(h.startsWith('c-')&&h.slice(2)!==(ME?ME.cid:G.cid))location.reload()});
 
 /* ---------- 🏠 처음 화면: 입장해 있어도 첫 화면을 다시 보고, 이어서 하거나 다른 이름으로 들어가기 ---------- */
 function vHome(){
   const c=gCls(ME.cid);const t=TABS.find(x=>x.k===CUR.tab)||TABS[0];
   document.body.className='th-rx';
-  app.innerHTML=`${DECO}<div class="jwrap">${hero()}
+  app.innerHTML=`${DECO}<div class="jwrap">${hero()}${hostPickHTML(ME.cid)}
     <div class="card join-card home-card">
       ${c?`<div class="jcls" style="--c:${c.color||'#23BF98'}"><span class="jcls-e">${esc(c.emo||'📚')}</span><div><small>지금 들어와 있는 모임</small><b>${esc(c.name)}</b></div></div>`:''}
       <div class="char-stage">${avatar(ME.char,'xl')}<div class="char-name"><small>나의 닉네임</small><b>${esc(ME.nick)}</b><small class="muted">🪪 ${esc(ME.name)}</small></div></div>
       <button class="btn coral big wide" data-a="g-resume">▶ 이어서 하기 <small style="opacity:.85">· ${t.e} ${esc(t.s)}</small></button>
       <button class="btn wide" data-a="g-out">🚪 다른 이름으로 입장하기</button>
       <p class="hint">다시 들어와도 내 글·대화방·제출물은 그대로 있어요.</p>
+      <p class="hint">다른 방은 호스트가 알려 준 <b>그 방의 주소(QR)</b>로 들어와요.</p>
     </div></div>`;
   window.scrollTo({top:0});
 }
+/* 이 기기에서 들어갔던 방들 (호스트 주소로 들어온 방만) — 게스트에게 목록으로 보여 주지는 않아요 */
+function joinedRooms(){return Object.values(sessions()).filter(s=>s&&s.cid&&Store.peek('classes/'+s.cid))}
 ACT['g-home']=()=>{closeModal();G.home=true;gRender()};
 ACT['g-resume']=()=>{G.home=false;app.innerHTML='';gRender();window.scrollTo({top:0})};
 
