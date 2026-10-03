@@ -890,6 +890,8 @@ textarea.in{resize:vertical;line-height:1.6}
   .mechip{padding:3px}
   .mechip b{display:none}
   .tb-row .btn.sm{padding:4px 9px}
+  .mechip{flex:0 0 auto}
+  .homebtn{min-width:0;flex:0 1 auto;overflow:hidden}
 }
 
 /* 메뉴 첫 부분(그림+설명)을 휴대폰에서 작게 → 글쓰기 상자가 한 화면에 들어오게 */
@@ -1160,9 +1162,7 @@ textarea.in{resize:vertical;line-height:1.6}
 .cmt-in{display:flex;gap:6px}
 .cmt-in .in{flex:1;min-width:0;padding:7px 11px!important;font-size:14.5px!important}
 /* 자판기 카드: 잠금 / 공개 */
-.vc-lock{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:2px dashed rgba(35,28,61,.35);border-radius:14px;background:repeating-linear-gradient(-45deg,#F7F2FF 0 8px,#fff 8px 16px);font-family:var(--ui)}
-.vc-lock span{flex:1}
-.vc-lock small{color:var(--muted)}
+.vc-lock{display:grid;gap:10px;padding:12px 14px;border:2px dashed rgba(35,28,61,.35);border-radius:14px;background:repeating-linear-gradient(-45deg,#F7F2FF 0 8px,#fff 8px 16px);font-family:var(--ui)}
 .vinfo{display:grid;gap:6px;background:color-mix(in srgb,var(--c) 12%,#fff);border-radius:14px;padding:10px 12px}
 .vi-r{display:grid;grid-template-columns:86px 1fr;gap:8px;align-items:baseline;font-size:14.5px;word-break:keep-all;overflow-wrap:anywhere}
 .vi-r .lbl{border-right:0;color:color-mix(in srgb,var(--c) 70%,#000);padding-right:0}
@@ -1180,7 +1180,6 @@ textarea.in{resize:vertical;line-height:1.6}
 .gcap.on::after{content:"✓";position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;background:var(--lemon);border:2px solid var(--ink);font-size:12px;display:grid;place-items:center;font-weight:700}
 .rct{min-width:38px;justify-content:center}
 .vc-lock .gcap.lk{flex:0 0 auto;animation:jiggle 2.4s ease-in-out infinite}
-.vc-lock span:nth-child(2){font-size:14px;line-height:1.35}
 /* 재판 끝나는 때 고르기 · 기한 없음 표시 */
 .endmode{display:flex;gap:8px;flex-wrap:wrap}
 .em-opt{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);border-radius:12px;padding:6px 12px;background:#fff;cursor:pointer;font-family:var(--ui);font-size:15px;box-shadow:0 3px 0 var(--ink)}
@@ -1194,7 +1193,7 @@ textarea.in{resize:vertical;line-height:1.6}
    인물법정 (간결하게): 사건 파일 카드 · 법정 카드 하나 · 변호 | 검사 두 줄
    ========================================================= */
 .cfiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px 18px;padding-top:12px}
-.cfile{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0;cursor:pointer;padding:16px;border:var(--line);border-radius:4px 18px 18px 18px;background:linear-gradient(180deg,#FFF8E6,#F7E7C4);box-shadow:0 6px 0 var(--ink);text-align:left}
+.cfile{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:9px;min-width:0;padding:16px;border:var(--line);border-radius:4px 18px 18px 18px;background:linear-gradient(180deg,#FFF8E6,#F7E7C4);box-shadow:0 6px 0 var(--ink);text-align:left}
 .cfile.big{cursor:auto;gap:12px;padding:20px 18px 18px;margin-top:26px}
 .cfile.arch{filter:grayscale(.5)}
 .cf-tab{position:absolute;left:-2.5px;top:-25px;height:26px;padding:2px 12px 0;border:var(--line);border-bottom:0;border-radius:12px 12px 0 0;background:#F7E7C4;font-family:var(--ui);font-size:13px;white-space:nowrap}
@@ -1264,6 +1263,39 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
 .pleac{margin-top:12px}
 .pleac .row{flex-wrap:nowrap}
 @media (max-width:600px){.debate2{gap:6px}.dcol{padding:6px;border-radius:14px}.plea2{padding:7px}.plea2 p{font-size:13.5px}.p2-hd .hname{display:none}}
+/* 자판기 잠긴 캡슐: 윗줄 = 캡슐 + 안내 / 아랫줄 = 반응 수 + 뽑기 */
+.vl-msg{display:flex;align-items:center;gap:12px;min-width:0}
+.vl-msg .gcap.lk{flex:0 0 46px}
+.vl-t{display:grid;gap:2px;min-width:0;word-break:keep-all;overflow-wrap:anywhere}
+.vl-t b{font-family:var(--ui);font-weight:400;font-size:15.5px}
+.vl-t small{font-family:var(--body);font-size:13.5px;line-height:1.45;color:var(--muted)}
+.vl-ft{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.vl-ft .vl-n{font-size:13.5px;color:var(--muted)}
+.vl-ft .btn{margin-left:auto}
+.vc-top{flex-wrap:wrap}
+.hot{white-space:nowrap}
+/* 재판 신청 목록 카드 = 개요 + 바로 입장 버튼 */
+.cfile.go{cursor:pointer}
+.cfile .cf-charge b{font-family:var(--ui);font-weight:400;color:var(--indigo-d);margin-right:6px}
+.cfile .cf-charge{-webkit-line-clamp:3}
+.cf-why{margin:0;font-size:14px;line-height:1.5;color:#4A4166;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cf-by{display:inline-flex;align-items:center;gap:4px;min-width:0}
+.cfile>.btn.wide{margin-top:2px}
+.cfile .hostrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:8px;border-top:2px dashed rgba(35,28,61,.2)}
+.c2-why{margin:0;font-size:14px;line-height:1.5;opacity:.92;word-break:keep-all;overflow-wrap:anywhere}.c2-why b{font-family:var(--ui);font-weight:400;color:var(--gold)}
+.c2-side .cs-m{font-size:12px;color:var(--ink);opacity:.75;word-break:keep-all;margin-top:2px}.c2-side .cs-join{white-space:nowrap}
+/* 아주 좁은 휴대폰(≈340px 이하): 로고·버튼을 조금 줄여 오른쪽 내 캐릭터가 잘리지 않게 */
+@media (max-width:350px){
+  .tb-row{gap:5px}
+  .tb-row .btn.sm{padding:3px 7px;font-size:13px}
+  .homebtn .logo{zoom:.86}
+}
+@media (max-width:350px){
+  .c2-arena{grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:4px}
+  .c2-bal .balance{zoom:.22}.c2-bal{height:60px}
+  .c2-side{padding:8px 4px}
+  .c2-side>small{font-size:11.5px;word-break:keep-all}
+}
 
 </style>
 </head>
@@ -1276,7 +1308,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261003085638";
+const BUILD = "20261003092528";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1454,16 +1486,21 @@ const Store=(()=>{
   /* gen: 입장 등으로 "보는 사람"이 바뀌면 1 올림 → 그 전에 출발한 응답은 버림
      (예전엔 입장 직후 늦게 도착한 옛 응답이 빈 데이터를 덮어써 "모임을 찾지 못했어요"가 떴음) */
   let gen=0,loaded=LOCAL;
-  async function pull(force){
+  /* 전체 다시 받기(full): 바뀐 것만 받다가 하나라도 놓치면 그 글이 영영 안 보이던 문제 →
+     45초마다·앱으로 돌아올 때 처음부터 통째로 받아 기기마다 목록이 똑같아지게 */
+  let lastFull=0;const FULL_MS=45000;
+  async function pull(force,full){
     if(LOCAL||(pulling&&!force))return;
+    if(!full&&Date.now()-lastFull>FULL_MS)full=true;
     const g=gen;pulling=true;
     try{
-      const r=await (await fetch(API_URL+'?op=pull&since='+ver+(key?'&key='+encodeURIComponent(key):'')+(tok?'&tok='+encodeURIComponent(tok):''),{cache:'no-store'})).json();
+      const r=await (await fetch(API_URL+'?op=pull&since='+(full?0:ver)+(key?'&key='+encodeURIComponent(key):'')+(tok?'&tok='+encodeURIComponent(tok):''),{cache:'no-store'})).json();
       if(g!==gen)return;
       if(!r.ok)throw new Error(r.error||'pull');
-      const ks=Object.keys(r.docs||{});
-      ks.forEach(p=>{if(r.docs[p]===null)delete all[p];else all[p]=r.docs[p]});
-      ver=Math.max(ver,r.ver||0);loaded=true;
+      let ks=Object.keys(r.docs||{});
+      if(full){const before=JSON.stringify(all);all={};ks.forEach(p=>{if(r.docs[p]!==null)all[p]=r.docs[p]});lastFull=Date.now();ver=r.ver||0;ks=JSON.stringify(all)===before?[]:['*']}
+      else{ks.forEach(p=>{if(r.docs[p]===null)delete all[p];else all[p]=r.docs[p]});ver=Math.max(ver,r.ver||0)}
+      loaded=true;
       if(!online){online=true;setNet(true)}
       if(ks.length)notify();
     }catch(e){if(g===gen){if(online){online=false;setNet(false)}console.warn(e)}}
@@ -1471,7 +1508,7 @@ const Store=(()=>{
   }
   function setNet(ok){const d=$('#netdot');if(d)d.hidden=ok;if(!ok)toast('서버와 연결이 불안정해요. 잠시 후 자동으로 다시 이어져요.')}
   function loop(){clearTimeout(timer);timer=setTimeout(async()=>{await pull();loop()},document.hidden?Math.max(pollMs*4,12000):pollMs)}
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!LOCAL){pull();loop()}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!LOCAL){pull(false,true);loop()}});
   async function call(body){
     let r;
     for(let i=0;i<3;i++){
@@ -2132,7 +2169,7 @@ function vMine(mine,no){
   <div class="vgrid">${mine.slice().reverse().map(v=>vCard(v,no[v.id])).join('')||empty('✍️','아직 쓴 문장이 없어요','위에서 마음에 남은 문장을 넣어 보세요.')}</div>`;
 }
 function vTeam(team,no,left){
-  return `<div class="filters"><h2 style="font-size:22px">👀 팀원의 문장</h2><span class="grow"></span>${left?'<button class="btn lemon" data-a="v-rand">🎲 아무거나 뽑기</button>':''}</div>
+  return `<div class="filters"><h2 style="font-size:22px">👀 팀원의 문장</h2></div>
   <p class="muted" style="margin:-6px 0 12px;font-size:13px">마음에 드는 문장을 🎰 뽑으면 문장 정보·추천 이유가 열리고 댓글을 달 수 있어요 · 🗑는 내 화면에서만 지워져요</p>
   <div class="vgrid">${team.slice().reverse().map(v=>vCard(v,no[v.id])).join('')||empty('👀','아직 팀원의 문장이 없어요','팀원이 문장을 쓰면 여기에 나타나요.')}</div>`;
 }
@@ -2145,7 +2182,10 @@ function vCard(v,no){
     ${open?`<div class="vinfo">${info.info?`<div class="vi-r"><span class="lbl">📍 문장 정보</span><span>${esc(info.info)}</span></div>`:''}${info.reason?`<div class="vi-r"><span class="lbl">💬 추천 이유</span><span>${esc(info.reason)}</span></div>`:''}
         <div class="vi-r"><span class="lbl">🙋 추천인</span><span>${v._mine?'나':ROLE.host?`${esc(w.nick||'')} ${hostWho(w)}`:who((room&&room.a)||{})}</span></div></div>
       ${talkBox(v.id)}`
-      :`<div class="vc-lock"><span class="gcap lk" style="--c:${c}" aria-hidden="true"><i class="gc-t"></i><i class="gc-b"></i></span><span>🔒 문장 정보 · 추천 이유가<br>이 캡슐 안에 있어요</span><small>${nC||nR?`💬 ${nC} · ❤️ ${nR}`:''}</small><button class="btn pink" data-a="v-draw" data-id="${v.id}">🎰 뽑기!</button></div>`}
+      :`<div class="vc-lock">
+          <div class="vl-msg"><span class="gcap lk" style="--c:${c}" aria-hidden="true"><i class="gc-t"></i><i class="gc-b"></i></span><span class="vl-t"><b>🔒 잠긴 캡슐</b><small>뽑으면 문장 정보와 추천 이유가 열려요</small></span></div>
+          <div class="vl-ft">${nC||nR?`<span class="vl-n">💬 ${nC} · ❤️ ${nR}</span>`:''}<button class="btn pink" data-a="v-draw" data-id="${v.id}">🎰 뽑기!</button></div>
+        </div>`}
   </article>`;
 }
 ACT['v-view']=el=>{CUR.vView=CUR.vView===el.dataset.v?null:el.dataset.v;if(CUR.vCol==null)CUR.vCol=Math.floor(Math.random()*CAPS.length);rerender()};
@@ -2312,7 +2352,6 @@ function vCourt(){
   CUR.trial=null;
   if(ROLE.host)return vCourtHost();
   const fs=folders();
-  if(CUR.folder){const f=fs.find(x=>x.id===CUR.folder);if(f)return vFolder(f);CUR.folder=null}
   const ts=trials();const live=ts.filter(t=>tState(t)==='live');
   return `
   <section class="shero"><div class="sh-art">${artBalance(0,null,true)}<div class="gavel" aria-hidden="true"><i class="gs"></i><i class="gh"></i></div></div>
@@ -2374,7 +2413,7 @@ ACT['pt-save']=async el=>{
   const pid=uid('p');
   const ok=await W(()=>Store.set('petition/'+pid,{cid:CUR.cid,...c,img:CUR.imgs.pt||'',reason,status:'wait',...stamp(),at:Date.now()}));
   el.disabled=false;
-  if(ok!==false){takeImg('pt');closeModal();CUR.folder=pid;pop('신청 완료!');toast('호스트가 신청서를 보고 재판을 열어 줄 거예요 ⚖️');rerender()}
+  if(ok!==false){takeImg('pt');closeModal();pop('신청 완료!');toast('호스트가 신청서를 보고 재판을 열어 줄 거예요 ⚖️');rerender()}
 };
 
 /* ---------- 📁 사건 폴더 (호스트 전용) ----------
@@ -2392,69 +2431,55 @@ function folderState(f){
   return (f.p.status==='reject')?{k:'reject',t:'🙅 반려'}:{k:'wait',t:'⏳ 심사 중'};
 }
 function ymd(t){const d=new Date(t);return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`}
-/* 사건 파일 카드 (재판 신청 목록에 한 줄씩) */
+/* 사건 파일 카드 (재판 신청 목록에 한 장씩) — 개요를 보고 카드의 버튼으로 바로 재판에 들어가요 */
 function folderCard(f){
-  const d=f.p||f.t;const st=folderState(f);const s=f.t?score(f.t.id):null;
-  return `<article class="cfile${f.archived?' arch':''}" data-a="f-open" data-id="${f.id}" tabindex="0" role="button" aria-label="${esc(d.who)} 사건 파일 열기">
+  const d=f.p||f.t;const st=folderState(f);const s=f.t?score(f.t.id):null;const p=f.p,t=f.t;
+  return `<article class="cfile${f.archived?' arch':''}${t?' go':''}" id="cf-${f.id}"${t?` data-a="t-open" data-id="${t.id}"`:''}>
     <span class="cf-tab">No.${f.no} · 📅 ${ymd(f.at)} 접수</span>
     <div class="cf-head"><span class="f-emo">${esc(d.emo||'⚖️')}</span><div class="grow" style="min-width:0"><small class="muted">피고인</small><h3>${esc(d.who)}</h3></div><span class="st ${st.k==='live'?'live':st.k==='done'?'done':''}">${st.t}</span></div>
-    <p class="cf-charge">${esc(d.charge)}</p>
-    <div class="cf-ft">${s?`<span class="cf-score"><b class="d">🛡️ ${s.def}</b> : <b class="p">${s.pro} ⚔️</b></span><span class="grow"></span>${tState(f.t)==='live'?leftTag(f.t):''}`
-      :`<span>📝 ${esc(f.p.by==='host'?'호스트':f.p.nick)}</span><span class="grow"></span><span>🙋 ${L(f.p.id).n}</span>`}</div>
+    <p class="cf-charge"><b>공소 사실</b>${esc(d.charge)}</p>
+    ${p&&p.reason?`<p class="cf-why">💬 ${esc(p.reason)}</p>`:''}
+    ${p&&p.status==='reject'&&p.memo?`<p class="cf-why">🙅 호스트: ${esc(p.memo)}</p>`:''}
+    <div class="cf-ft">${p?`<span class="cf-by">📝 ${esc(p.by==='host'?'호스트':p.nick)}${ROLE.host?' '+hostWho(p):''}</span>`:'<span class="cf-by">📝 호스트 접수</span>'}<span class="grow"></span>
+      ${s?`<span class="cf-score"><b class="d">🛡️ ${s.def}</b> : <b class="p">${s.pro} ⚔️</b></span>`:''}${t&&tState(t)==='live'?leftTag(t):''}${!ROLE.host&&p&&p._mine&&!t?delBtn(p,'petition/'+p.id):''}</div>
+    ${fileAction(f)}
+    ${ROLE.host?`<div class="row hostrow">
+      ${p&&!t?`<button class="btn sm indigo" data-a="pt-open" data-id="${p.id}">⚖️ 개정하기</button>${p.status!=='reject'?`<button class="btn sm" data-a="pt-reject" data-id="${p.id}">🙅 반려</button>`:''}`:''}
+      <span class="grow"></span><button class="btn sm ${f.archived?'mint':''}" data-a="f-arch" data-id="${f.id}">${f.archived?'📤 꺼내기':'📦 보관'}</button><button class="btn sm ghost" data-a="f-del" data-id="${f.id}">🗑 삭제</button></div>`
+      :''}
   </article>`;
 }
 function vCourtHost(){
   const fs=folders();const act=fs.filter(f=>!f.archived),arc=fs.filter(f=>f.archived);
-  if(CUR.folder){const f=fs.find(x=>x.id===CUR.folder);if(f)return vFolder(f);CUR.folder=null}
   const wait=act.filter(f=>!f.t&&f.p&&f.p.status!=='reject').length;
   return `
   <section class="shero"><div class="sh-art">${artBalance(0,null,true)}<div class="gavel" aria-hidden="true"><i class="gs"></i><i class="gh"></i></div></div>
     <div class="sh-t"><span class="sh-k">CHARACTER COURT · HOST</span><h1>인물법정</h1>
-      ${heroLines(['<b>재판 신청서</b>와 호스트가 접수한 사건이 | <b>📝 재판 신청 목록</b>에 모여요.','사건 파일을 열어 개정하고, | 끝난 사건은 <b>📦 보관</b>해요.','보관한 사건은 게스트 화면에서 보이지 않아요.'])}
+      ${heroLines(['<b>재판 신청서</b>와 호스트가 접수한 사건이 | <b>📝 재판 신청 목록</b>에 모여요.','카드에서 바로 <b>개정</b>하고, | 끝난 사건은 <b>📦 보관</b>해요.','보관한 사건은 게스트 화면에서 보이지 않아요.'])}
       <div class="sh-stats"><span><b>${wait}</b>건 심사 대기</span><span><b>${act.filter(f=>f.t&&tState(f.t)==='live').length}</b>건 재판 중</span><span><b>${arc.length}</b>개 보관</span></div>
       <div class="sh-act"><button class="btn lemon big" data-a="t-new">⚖️ 새 사건 접수</button></div></div>
   </section>
-  <div class="filters"><h2 style="font-size:24px">📝 재판 신청 목록</h2><span class="muted" style="font-family:var(--ui);font-size:14px">최근 접수 순 · 눌러서 열어요</span></div>
+  <div class="filters"><h2 style="font-size:24px">📝 재판 신청 목록</h2><span class="muted" style="font-family:var(--ui);font-size:14px">최근 접수 순</span></div>
   <div class="cfiles">${act.map(folderCard).join('')||empty('📁','아직 사건이 없어요','게스트가 재판을 신청하거나 "새 사건 접수"를 하면 생겨요.')}</div>
   <details class="archbox" ${CUR.archOpen?'open':''}><summary data-a="arch-t">📦 보관함 <b>${arc.length}</b> <small class="muted">게스트에게 보이지 않는 사건</small></summary>
     <div class="cfiles" style="margin-top:14px">${arc.map(folderCard).join('')||'<p class="muted">보관한 사건이 없어요.</p>'}</div></details>`;
 }
-/* 사건 파일 하나 (신청 목록에서 눌렀을 때) — 필요한 내용과 할 일 하나만 */
-function vFolder(f){
-  const d=f.p||f.t;const st=folderState(f);const p=f.p,t=f.t;
-  const rest=folders().filter(x=>x.id!==f.id&&(ROLE.host||!x.archived)&&!!x.archived===!!f.archived);
-  return `<button class="btn sm back" data-a="f-back">← 재판 신청 목록</button>
-  <section class="cfile big${f.archived?' arch':''}">
-    <span class="cf-tab">No.${f.no} · 📅 ${ymd(f.at)} 접수${f.archived?' · 📦 보관 중':''}</span>
-    <div class="cf-head"><span class="f-emo">${esc(d.emo||'⚖️')}</span><div class="grow" style="min-width:0"><small class="muted">피고인</small><h2>${esc(d.who)}</h2><p class="case-work">${workSrc(d)}</p></div><span class="st ${st.k==='live'?'live':st.k==='done'?'done':''}">${st.t}</span></div>
-    <div class="charge2"><b>공소 사실</b>${esc(d.charge)}</div>${imgHTML(d.img,{cls:'pet-img'})}
-    <div class="cf-meta">
-      ${p?`<div><span class="lbl">📝 신청</span><span>${who(p)}</span></div>${p.reason?`<div><span class="lbl">💬 신청 이유</span><span>${esc(p.reason)}</span></div>`:''}`:''}
-      ${p&&p.status==='reject'&&p.memo?`<div><span class="lbl">🙅 반려</span><span>${esc(p.memo)}</span></div>`:''}
-      ${t?`<div><span class="lbl">⚖️ 재판</span><span>${tState(t)==='live'?leftTag(t):tState(t)==='done'?`🔔 ${verdict(score(t.id)).t} ${verdict(score(t.id)).s}`:'🕐 개정 전'}</span></div>`:''}
-    </div>
-    ${fileAction(f)}
-    ${ROLE.host?`<div class="row hostrow">
-      ${p&&!t?`<button class="btn sm indigo" data-a="pt-open" data-id="${p.id}">⚖️ 개정하기</button>${p.status!=='reject'?`<button class="btn sm" data-a="pt-reject" data-id="${p.id}">🙅 반려</button>`:''}`:''}
-      <span class="grow"></span><button class="btn sm ${f.archived?'mint':''}" data-a="f-arch" data-id="${f.id}">${f.archived?'📤 꺼내기':'📦 보관'}</button><button class="btn sm ghost" data-a="f-del" data-id="${f.id}">🗑 삭제</button></div>`:''}
-  </section>
-  ${rest.length?`<div class="filters"><h2 style="font-size:20px">📂 다른 사건 파일</h2></div><div class="cfiles">${rest.map(folderCard).join('')}</div>`:''}`;
-}
-/* 사건 파일의 큰 버튼 하나: 재판 입장 · 나도 보고 싶어요 · 재판 기록 */
+/* 카드의 큰 버튼 하나: 재판 입장 · 나도 보고 싶어요 · 재판 기록 */
 function fileAction(f){
   const t=f.t,p=f.p;
   if(t){const s=tState(t),my=myTeam(t.id);
-    if(s==='live')return `<button class="btn indigo big wide" data-a="t-open" data-id="${t.id}">${ROLE.host?'📂 재판 보기':my?`⚖️ 재판 이어서 하기 · ${SIDES[my.side].n}`:'⚖️ 재판 입장하기'}</button>`;
-    if(s==='wait')return `<button class="btn indigo big wide" data-a="t-open" data-id="${t.id}">🕐 ${fmtDate(t.start)} 개정 · 사건 보기</button>`;
-    return `<button class="btn big wide" data-a="t-open" data-id="${t.id}">📜 재판 기록 보기</button>`;}
+    if(s==='live')return `<button class="btn indigo wide" data-a="t-open" data-id="${t.id}">${ROLE.host?'⚖️ 재판 보기':my?`⚖️ 재판 이어서 하기 · ${SIDES[my.side].n}`:'⚖️ 재판 입장하기'}</button>`;
+    if(s==='wait')return `<button class="btn indigo wide" data-a="t-open" data-id="${t.id}">🕐 ${fmtDate(t.start)} 개정 · 사건 보기</button>`;
+    return `<button class="btn wide" data-a="t-open" data-id="${t.id}">📜 재판 기록 보기</button>`;}
   if(p&&p.status==='reject')return '';
   if(p){const h=L(p.id);
-    return ROLE.host?`<p class="muted" style="margin:0;font-family:var(--ui)">⏳ 심사 대기 중 · 🙋 ${h.n}명이 보고 싶어 해요</p>`
-      :`<button class="btn big wide ${h.mine?'indigo':'lemon'}" data-a="like" data-t="${p.id}" data-k="want" ${canLike(p)?'':'disabled'}>🙋 나도 보고 싶어요 ${h.n} <small style="opacity:.8">· 호스트가 심사 중이에요</small></button>`;}
+    return ROLE.host?`<p class="muted" style="margin:0;font-family:var(--ui);font-size:14px">⏳ 심사 대기 중 · 🙋 ${h.n}명이 보고 싶어 해요</p>`
+      :`<button class="btn wide ${h.mine?'indigo':'lemon'}" data-a="like" data-t="${p.id}" data-k="want" ${canLike(p)?'':'disabled'}>🙋 나도 보고 싶어요 ${h.n} <small style="opacity:.8">· 심사 중</small></button>`;}
   return '';
 }
-ACT['f-open']=el=>{CUR.folder=el.dataset.id;rerender();window.scrollTo({top:0})};
-ACT['f-back']=()=>{CUR.folder=null;rerender();window.scrollTo({top:0})};
+/* 예전 "사건 파일 하나" 화면은 없앴어요 — 남아 있는 호출은 재판 화면이나 목록으로 */
+ACT['f-open']=el=>{const f=folders().find(x=>x.id===el.dataset.id);if(f&&f.t){CUR.trial=f.t.id;rerender();window.scrollTo({top:0})}};
+ACT['f-back']=()=>{CUR.trial=null;rerender();window.scrollTo({top:0})};
 ACT['arch-t']=()=>{CUR.archOpen=!CUR.archOpen};
 function folderDocs(f){
   const paths=[];
@@ -2500,16 +2525,17 @@ function vTrial(id){
   const canJoin=!ROLE.host&&st==='live'&&!my;
   const side=k=>{const sd=SIDES[k];const cnt=k==='def'?s.dn:s.pn;const mine=my&&my.side===k;
     const inner=`<span class="cs-e">${sd.e}</span><b>${sd.n}</b><em>${s[k]}<small>점</small></em><small>${nn[k]}명 · ${sd.act} ${cnt}개</small>`;
-    return canJoin?`<button class="c2-side ${k}" data-a="t-join" data-id="${id}" data-s="${k}">${inner}<span class="cs-join">${k==='def'?'피고인을 지켜라':'죄를 밝혀라'} · 합류 ▶</span></button>`
+    return canJoin?`<button class="c2-side ${k}" data-a="t-join" data-id="${id}" data-s="${k}">${inner}<small class="cs-m">${k==='def'?'피고인을 지켜라':'죄를 밝혀라'}</small><span class="cs-join">합류 ▶</span></button>`
       :`<div class="c2-side ${k}${mine?' mine':''}">${inner}${mine?'<span class="cs-join">⭐ 내 팀</span>':''}</div>`};
   const now=st==='live'?`<span class="c2-now live">● 재판 중 · ${leftTag(t)}</span>`:st==='wait'?`<span class="c2-now">🕐 ${fmtDate(t.start)} 개정</span>`:`<span class="c2-now done">🔔 판결: ${v.t} · ${v.s}</span>`;
   const col=k=>{const list=ps.filter(p=>p.side===k);const sd=SIDES[k];
     return `<div class="dcol ${k}"><h3>${sd.e} ${sd.n} <small>${sd.act}</small><b>${s[k]}점</b></h3>${list.map(p=>pleaHTML(p,byId,mvp,st,my)).join('')||`<p class="dcol-0">아직 ${sd.act} 글이 없어요</p>`}</div>`};
-  return `<button class="btn sm back" data-a="t-back">← ${CUR.folder?'사건 파일로':'재판 신청 목록'}</button>
+  return `<button class="btn sm back" data-a="t-back">← 재판 신청 목록</button>
   <section class="court2" id="courthd">
     <div class="c2-top"><span class="case-no">사건번호 ${caseNo(t,ts)}</span>${now}</div>
     <div class="c2-who"><span class="ch-emo">${esc(t.emo||'⚖️')}</span><div style="min-width:0"><small>피고인</small><h1>${esc(t.who)}</h1><p>${workSrc(t)}</p></div></div>
     <div class="charge"><b>공소 사실</b>${esc(t.charge)}</div>${imgHTML(t.img,{cls:'ch-img'})}
+    ${(()=>{const p=list('petition').find(x=>x.trial===id);return p?`<p class="c2-why">📝 <b>${esc(p.by==='host'?'호스트':p.nick)}</b>의 신청${p.reason?` · 💬 ${esc(p.reason)}`:''}</p>`:''})()}
     <div class="c2-arena">${side('def')}<div class="c2-bal">${artBalance(tilt,null,false)}</div>${side('pro')}</div>
     ${st==='done'?`<div class="verdict ${v.k}"><span class="vd-g">🔨</span><div><small>최종 판결 · 🛡️ ${s.def}점 vs ⚔️ ${s.pro}점</small><h2>${v.t}</h2><p>${v.s}${ps.length?'':' (글 없음)'}</p></div></div>`:''}
     <p class="c2-rule">🎯 <b>점수 내는 방법</b> 변론·공소 유지 글 1개 = 1점, 🔨인정 1개 = 1점. 점수가 많은 쪽으로 저울이 기울고, 재판이 끝날 때 점수가 많은 쪽이 이겨요.${canJoin?' 👆 위에서 팀을 골라 합류해요!':''}</p>
@@ -3062,7 +3088,7 @@ ACT['t-file']=async el=>{
   el.disabled=true;const id=uid('p');
   const ok=await hW(()=>Store.set('petition/'+id,{cid:CUR.cid,...c,img:CUR.imgs.pt||'',reason:'',status:'wait',...HOST_ID,at:Date.now()}));
   el.disabled=false;
-  if(ok!==false){takeImg('pt');closeModal();CUR.folder=id;pop('접수 완료!');hRender();window.scrollTo({top:0})}
+  if(ok!==false){takeImg('pt');closeModal();pop('접수 완료!');hRender();window.scrollTo({top:0})}
 };
 /* 게스트 신청서로 재판 열기 */
 ACT['pt-open']=el=>{const p=Store.peek('petition/'+el.dataset.id);if(!p)return;CUR.pid=el.dataset.id;delete CUR.imgs.pt;
@@ -3087,7 +3113,7 @@ ACT['t-save']=async el=>{
   ops.push(old?{op:'update',path:'petition/'+pid,data:{status:'open',trial:id}}:{op:'set',path:'petition/'+pid,data:{cid:CUR.cid,...c,img,reason:'',status:'open',trial:id,...HOST_ID,at:now}});
   const ok=await hW(()=>Store.batch(ops));
   el.disabled=false;
-  if(ok!==false){takeImg('pt');CUR.pid=null;CUR.folder=pid;closeModal();CUR.trial=id;pop('개정!');hRender();window.scrollTo({top:0})}
+  if(ok!==false){takeImg('pt');CUR.pid=null;closeModal();CUR.trial=id;pop('개정!');hRender();window.scrollTo({top:0})}
 };
 ACT['t-extend']=async el=>{const p='trial/'+el.dataset.id;const t=Store.peek(p);if(!t)return;await hW(()=>Store.update(p,{end:Math.max(t.end,Date.now())+3600000}));toast('1시간 연장했어요.')};
 ACT['t-close']=el=>confirmBox('지금 바로 판결할까요? 게스트는 더 이상 변론할 수 없어요.','🔔 판결하기',async()=>{
