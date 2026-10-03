@@ -1299,7 +1299,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261003100635";
+const BUILD = "20261003104425";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -2223,7 +2223,7 @@ async function drawVend(id){
   if(!$('#gacha'))return;
   const b=r.book||{};const info=('info' in b)?b.info:(b.title?bookPlain(b):''),reason=b.reason||v.reason||'';
   g.classList.remove('wait');g.classList.add('open');
-  $('#gmsg').textContent='짜잔! 숨겨져 있던 이야기는…';
+  $('#gmsg').textContent='추천인이 선정한 문장';
   $('#gticket').innerHTML=`<small>🔓 공개</small>${info?`<b class="tk-i">📍 ${esc(info)}</b>`:''}${reason?`<span class="tk-r">💬 ${esc(reason)}</span>`:''}${!info&&!reason?'<b class="tk-i">정보 없이 문장만 넣었어요</b>':''}`;
   await sleep(450);confetti();
   $('#gact').innerHTML=`<button class="btn pink big" data-a="v-goto" data-id="${id}">💬 댓글·이모티콘 남기기</button><button class="btn" data-close>닫기</button>`;
