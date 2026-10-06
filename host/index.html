@@ -1345,7 +1345,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261006115441";
+const BUILD = "20261006160549";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1524,22 +1524,37 @@ const Store=(()=>{
      (예전엔 입장 직후 늦게 도착한 옛 응답이 빈 데이터를 덮어써 "모임을 찾지 못했어요"가 떴음) */
   let gen=0,loaded=LOCAL;
   /* 전체 다시 받기(full): 바뀐 것만 받다가 하나라도 놓치면 그 글이 영영 안 보이던 문제 →
-     45초마다·앱으로 돌아올 때 처음부터 통째로 받아 기기마다 목록이 똑같아지게 */
-  let lastFull=0;const FULL_MS=45000;
+     앱으로 돌아올 때 + 5분마다 처음부터 통째로 받아 기기마다 목록이 똑같아지게
+     (사진은 따로 받으니 통째로 받아도 가벼워요) */
+  let lastFull=0,scope='',newSrv=false;const FULL_MS=300000;
+  /* 서버가 멈춘 듯 대답이 없으면 기다리지 않고 끊고 다시 시도 (예전엔 "불러오는 중…"에서 영영 멈췄음) */
+  async function fetchT(url,opt={},ms=15000){
+    const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms);
+    try{return await fetch(url,{...opt,signal:ac.signal})}finally{clearTimeout(t)}
+  }
+  /* 이 기기에 마지막으로 받은 목록을 기억 → 다음에 열 때 기다리지 않고 바로 보여 줌 (사진은 빼고 저장) */
+  const ckey=()=>'rx-cache-'+(scope||'_')+'-'+(key?'host':tok?tok.slice(-10):'anon');
+  function loadCache(){try{const c=JSON.parse(localStorage.getItem(ckey())||'null');if(c&&c.all&&c.ver){all=c.all;ver=c.ver;loaded=true;return true}}catch(e){}return false}
+  let cacheT=null;
+  function saveCache(){if(!newSrv)return;clearTimeout(cacheT);cacheT=setTimeout(()=>{try{
+    const slim={};for(const p in all){const d=all[p];if(d&&typeof d==='object'){let o=null;for(const k in d)if(typeof d[k]==='string'&&d[k].startsWith('data:')){o=o||{...d};o[k]='@img:'+p+'#'+k}slim[p]=o||d}else slim[p]=d}
+    const s=JSON.stringify({ver,all:slim,at:Date.now()});if(s.length<2500000)localStorage.setItem(ckey(),s)}catch(e){}},1200)}
   async function pull(force,full){
     if(LOCAL||(pulling&&!force))return;
     if(!full&&Date.now()-lastFull>FULL_MS)full=true;
     const g=gen;pulling=true;
     try{
-      const r=await (await fetch(API_URL+'?op=pull&since='+(full?0:ver)+(key?'&key='+encodeURIComponent(key):'')+(tok?'&tok='+encodeURIComponent(tok):''),{cache:'no-store'})).json();
+      const r=await (await fetchT(API_URL+'?op=pull&since='+(full?0:ver)+(scope&&!key?'&cid='+encodeURIComponent(scope):'')+(key?'&key='+encodeURIComponent(key):'')+(tok?'&tok='+encodeURIComponent(tok):''),{cache:'no-store'})).json();
       if(g!==gen)return;
       if(!r.ok)throw new Error(r.error||'pull');
+      newSrv=!!r.img;
       let ks=Object.keys(r.docs||{});
-      if(full){const before=JSON.stringify(all);all={};ks.forEach(p=>{if(r.docs[p]!==null)all[p]=r.docs[p]});lastFull=Date.now();ver=r.ver||0;ks=JSON.stringify(all)===before?[]:['*']}
+      if(full){const before=JSON.stringify(all);const mineNew={};for(const p in all){const d=all[p];if(d&&d._mine&&!(p in r.docs)&&Date.now()-(d.at||0)<20000)mineNew[p]=d}
+        all={...mineNew};ks.forEach(p=>{if(r.docs[p]!==null)all[p]=r.docs[p]});lastFull=Date.now();ver=r.ver||0;ks=JSON.stringify(all)===before?[]:['*']}
       else{ks.forEach(p=>{if(r.docs[p]===null)delete all[p];else all[p]=r.docs[p]});ver=Math.max(ver,r.ver||0)}
       loaded=true;
       if(!online){online=true;setNet(true)}
-      if(ks.length)notify();
+      if(ks.length){notify();saveCache()}
     }catch(e){if(g===gen){if(online){online=false;setNet(false)}console.warn(e)}}
     finally{if(g===gen)pulling=false}
   }
@@ -1549,7 +1564,7 @@ const Store=(()=>{
   async function call(body){
     let r;
     for(let i=0;i<3;i++){
-      try{r=await (await fetch(API_URL,{method:'POST',body:JSON.stringify({...body,key,tok})})).json();if(r.ok||r.error!=='busy')break}
+      try{r=await (await fetchT(API_URL,{method:'POST',body:JSON.stringify({...body,key,tok})},body.op==='upload'?180000:40000)).json();if(r.ok||r.error!=='busy')break}
       catch(e){r={ok:false,error:'network'}}
       await sleep(600+i*800);
     }
@@ -1567,13 +1582,24 @@ const Store=(()=>{
       else if(o.op==='update')all[o.path]=merge(all[o.path]||{},clone(o.data));
       else if(o.op==='delete')delete all[o.path];
     };
-    (body.op==='batch'?body.ops:[body]).forEach(optimistic);notify();
+    (body.op==='batch'?body.ops:[body]).forEach(o=>{optimistic(o);if(o.data)IMGS.seed(o.path,o.data)});notify();
     try{const r=await call(body);pull();return r}
     catch(e){pull();throw e}
   }
   return{
-    async init({poll=3000,hostKey='',token=''}={}){pollMs=poll;key=hostKey;tok=token;if(LOCAL){raw=lload();rebuild();return}await pull();loop()},
-    async setTok(t){tok=t||'';if(LOCAL){rebuild();notify();return}gen++;all={};ver=0;loaded=false;await pull(true);notify()},
+    /* cid: 게스트는 자기 방 글만 받아요. 이 기기에 기억해 둔 목록이 있으면 서버를 기다리지 않고 바로 보여 줘요 */
+    async init({poll=3000,hostKey='',token='',cid=''}={}){pollMs=poll;key=hostKey;tok=token;scope=cid||'';if(LOCAL){raw=lload();rebuild();return}
+      if(loadCache()){newSrv=true;pull(true,true);loop();return}
+      await pull();loop()},
+    async setTok(t){tok=t||'';if(LOCAL){rebuild();notify();return}gen++;all={};ver=0;loaded=false;lastFull=0;
+      if(loadCache()){notify();pull(true,true);return}
+      await pull(true);notify()},
+    /* 📷 사진 따로 받기 ('@img:경로#칸' 여러 개 → {표시: data:…}) */
+    async imgs(list){
+      if(LOCAL||!list.length)return {};
+      const r=await (await fetchT(API_URL+'?op=imgs&p='+encodeURIComponent(list.join('|'))+(key?'&key='+encodeURIComponent(key):'')+(tok?'&tok='+encodeURIComponent(tok):''),{cache:'no-store'},30000)).json();
+      return (r&&r.imgs)||{};
+    },
     loaded:()=>loaded,
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
     doc(p){return clone(all[p])},
@@ -1608,9 +1634,30 @@ const Store=(()=>{
     }
   };
 })();
+/* ---------- 📷 사진 나중에 받기 ----------
+   서버는 처음 목록에 사진 대신 '@img:경로#칸' 표시만 보내요 (처음 여는 속도 ↑, 데이터 ↓).
+   화면에 그 사진이 나타나면 몇 장씩 묶어 따로 받아 채워요. */
+const IMGS=(()=>{
+  const cache=new Map(),want=new Set(),busy=new Set();let t=null;
+  const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  const isTok=v=>typeof v==='string'&&v.startsWith('@img:');
+  const src=v=>isTok(v)?(cache.get(v)||BLANK):v;
+  const attr=v=>isTok(v)&&!cache.has(v)?` data-lz="${esc(v)}"`:'';
+  function fill(v,url){document.querySelectorAll('img[data-lz]').forEach(i=>{if(i.dataset.lz===v){i.src=url;i.removeAttribute('data-lz')}})}
+  function scan(root){if(!root||!root.querySelectorAll)return;
+    root.querySelectorAll('img[data-lz]').forEach(i=>{const v=i.dataset.lz;if(cache.has(v))fill(v,cache.get(v));else if(!busy.has(v))want.add(v)});
+    if(want.size&&!t)t=setTimeout(flush,40)}
+  function flush(){t=null;const list=[...want];want.clear();
+    for(let i=0;i<list.length;i+=6){const part=list.slice(i,i+6);part.forEach(v=>busy.add(v));
+      Store.imgs(part).then(r=>part.forEach(v=>{busy.delete(v);if(r[v]){cache.set(v,r[v]);fill(v,r[v])}})).catch(()=>part.forEach(v=>busy.delete(v)))}}
+  /* 내가 방금 올린 사진은 이미 갖고 있으니 다시 받지 않게 */
+  function seed(path,data){for(const k in data){const v=data[k];if(typeof v==='string'&&v.startsWith('data:'))cache.set('@img:'+path+'#'+k,v)}}
+  new MutationObserver(ms=>{for(const m of ms)m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.tagName==='IMG'&&n.dataset.lz)scan(n.parentNode);else scan(n)})}).observe(document.documentElement,{childList:true,subtree:true});
+  return{src,attr,isTok,seed,scan};
+})();
 async function checkHostKey(k){
   if(LOCAL)return true;
-  try{const r=await (await fetch(API_URL+'?op=auth&key='+encodeURIComponent(k),{cache:'no-store'})).json();return !!r.ok}catch(e){return null}
+  try{const r=await (await fetch(API_URL+'?op=auth&key='+encodeURIComponent(k),{cache:'no-store',signal:AbortSignal.timeout?AbortSignal.timeout(15000):undefined})).json();return !!r.ok}catch(e){return null}
 }
 function dbErr(e){
   const c=e&&e.code;
@@ -1817,9 +1864,9 @@ function imgPick(key,label='📷 사진 붙이기'){
   const v=CUR.imgs[key];
   return `<div class="imgpick"><label class="btn sm ip-btn"><input type="file" accept="image/*" hidden data-img="${key}">${label}</label><span class="ip-prev" id="ip-${key}">${v?ipThumb(key,v):''}</span></div>`;
 }
-function ipThumb(key,v){return `<img src="${v}" alt="붙인 사진 미리보기"><button type="button" class="ip-x" data-a="img-x" data-k="${key}" aria-label="사진 빼기">✕</button>`}
+function ipThumb(key,v){return `<img src="${IMGS.src(v)}"${IMGS.attr(v)} alt="붙인 사진 미리보기"><button type="button" class="ip-x" data-a="img-x" data-k="${key}" aria-label="사진 빼기">✕</button>`}
 function takeImg(key){const v=CUR.imgs[key]||'';delete CUR.imgs[key];const p=$('#ip-'+key);if(p)p.innerHTML='';return v}
-function imgHTML(src,{cls='',zoom=true}={}){return src?`<img class="uimg ${cls}" src="${src}" alt="첨부 사진" loading="lazy" ${zoom?'data-a="zoom" title="크게 보기"':''}>`:''}
+function imgHTML(src,{cls='',zoom=true}={}){return src?`<img class="uimg ${cls}" src="${IMGS.src(src)}"${IMGS.attr(src)} alt="첨부 사진" loading="lazy" ${zoom?'data-a="zoom" title="크게 보기"':''}>`:''}
 document.addEventListener('change',async e=>{
   const key=e.target.dataset&&e.target.dataset.img;if(!key)return;
   const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
@@ -1828,7 +1875,7 @@ document.addEventListener('change',async e=>{
   catch(err){delete CUR.imgs[key];const q=$('#ip-'+key);if(q)q.innerHTML='';toast('사진을 열지 못했어요. JPG·PNG 사진으로 골라 주세요.')}
 });
 ACT['img-x']=el=>takeImg(el.dataset.k);
-ACT.zoom=el=>lightbox(el.getAttribute('src'));
+ACT.zoom=el=>{if(el.dataset.lz){toast('사진을 불러오는 중이에요. 잠시 후 다시 눌러 주세요.');return}lightbox(el.getAttribute('src'))};
 
 ACT.like=async el=>{
   if(hostOnly())return;
@@ -2308,21 +2355,21 @@ function pola(d){
   const h=hashN(d.id);const r=((h%9)-4)*.9;const nC=cmtsOf(d.id).length;
   return `<article class="pola" style="--r:${r.toFixed(1)}deg;--tp:${TAPES[h%TAPES.length]}" data-a="c-open" data-id="${d.id}" tabindex="0" role="button" aria-label="필사 열기">
     <i class="tape"></i>
-    <div class="pola-img">${d.img?`<img src="${d.img}" alt="필사 사진" loading="lazy">`:'<span style="font-size:40px">✍️</span>'}</div>
+    <div class="pola-img">${d.img?`<img src="${IMGS.src(d.img)}"${IMGS.attr(d.img)} alt="필사 사진" loading="lazy">`:'<span style="font-size:40px">✍️</span>'}</div>
     <div class="pola-cap"><b>${srcLine(d)}</b>${d.thought?`<p>${esc(d.thought)}</p>`:""}</div>
     <div class="pola-ft">${who(d)}<span class="grow"></span><span>💬 ${nC}</span>${trashBtn(d,'copy/'+d.id)}</div>
   </article>`;
 }
 ACT['c-f']=el=>{CUR.cF=el.dataset.v;rerender()};
 ACT['c-open']=el=>openCopy(el.dataset.id);
-ACT['c-zoom']=el=>lightbox(el.getAttribute('src'));
+ACT['c-zoom']=el=>{if(el.dataset.lz)return;lightbox(el.getAttribute('src'))};
 function openCopy(id){
   openModal({cls:'th-copy',html:`<div class="modal-hd"><h2>✍️ 필사</h2><button class="xbtn" data-close aria-label="닫기">✕</button></div><div id="m-list"></div>${cmtForm(id)}`,
     refresh:()=>{const d=Store.peek('copy/'+id);if(!d)return null;return cpost({...d,id})+talkBox(id,{form:false})}});
 }
 function cpost(d){
   return `<div class="cpost">
-    <div class="pola-img">${d.img?`<img src="${d.img}" alt="필사 사진" data-a="zoom" title="크게 보기">`:''}</div>
+    <div class="pola-img">${d.img?`<img src="${IMGS.src(d.img)}"${IMGS.attr(d.img)} alt="필사 사진" data-a="zoom" title="크게 보기">`:''}</div>
     <div class="cp-t"><div class="row">${who(d)}<span class="grow"></span><small class="muted">${ago(d.at)}</small>${trashBtn(d,'copy/'+d.id)}</div>
       <h3 class="cp-src">${srcLine(d)}</h3>
       ${d.line?`<p class="cp-line">${esc(d.line)}</p>`:''}
