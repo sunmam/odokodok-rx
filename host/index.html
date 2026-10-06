@@ -1314,6 +1314,25 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
 .hp-hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .hp-hd b{font-family:var(--ui);font-weight:400}
 .hp-hd small{color:var(--muted);font-size:12.5px}
+/* 📝 재판 신청서: 종이 서류 느낌 (줄 친 크림색 종이 + 도장) */
+.petform{position:relative;display:grid;gap:12px;padding:20px 18px 18px;border:2.5px solid var(--ink);border-radius:6px 18px 18px 18px;color:var(--ink);
+  background:repeating-linear-gradient(180deg,transparent 0 31px,rgba(91,95,239,.10) 31px 32px),linear-gradient(180deg,#FFFDF5,#FBF1D9);box-shadow:0 6px 0 var(--ink)}
+.pf-title{display:flex;align-items:center;justify-content:center;gap:10px;padding-bottom:10px;border-bottom:3px double var(--ink)}
+.pf-title span{font-family:var(--display);font-size:24px;letter-spacing:.06em}
+.pf-seal{font-style:normal;position:absolute;right:14px;top:12px;width:44px;height:44px;border:3px solid #D9483B;border-radius:50%;display:grid;place-items:center;font-size:20px;transform:rotate(-12deg);background:rgba(255,255,255,.6);box-shadow:inset 0 0 0 2px rgba(217,72,59,.35)}
+.pf-row{display:grid;gap:5px}
+.pf-l{font-family:var(--ui);font-size:14px;color:var(--indigo-d)}
+.pf-row>b{font-weight:400;font-size:16px;background:#fff;border:2px dashed rgba(35,28,61,.3);border-radius:12px;padding:8px 12px}
+.petform .in{background:#fff}
+/* 마음 약국: 내 고민 올리기 · 💌 1:1 대화 · 처방하기 세 칸 */
+.bigbtns.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bigbtns.three .bb-t b{font-size:20px}
+@media (max-width:600px){
+  .bigbtns.three{gap:7px}
+  .bigbtns.three .bigbtn{padding:11px 5px}
+  .bigbtns.three .bb-t b{font-size:16px;word-break:keep-all}
+  .bigbtns.three .bb-t small{font-size:11.5px;word-break:keep-all;line-height:1.35}
+}
 
 </style>
 </head>
@@ -1326,7 +1345,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261003104425";
+const BUILD = "20261006115441";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1819,10 +1838,10 @@ ACT.like=async el=>{
 };
 ACT.del=el=>{
   /* 창(모달) 안에서 지울 때는 창이 닫히지 않게 간단한 확인만 */
-  if(el.closest('#modal')){if(confirm('정말 지울까요? 지운 글은 되돌릴 수 없어요.'))W(()=>Store.del(el.dataset.p)).then(()=>refreshModal());return}
+  if(el.closest('#modal')){if(confirm(ROLE.host?'정말 지울까요? 지운 글은 되돌릴 수 없어요.':'내 글을 지울까요?\n모든 사람(호스트 포함) 화면에서 지워지고 되돌릴 수 없어요.'))W(()=>Store.del(el.dataset.p)).then(()=>refreshModal());return}
   delConfirm(el);
 };
-const delConfirm=el=>confirmBox('정말 지울까요? 지운 글은 되돌릴 수 없어요.','지우기',async()=>{
+const delConfirm=el=>confirmBox(ROLE.host?'정말 지울까요? 지운 글은 되돌릴 수 없어요.':'내 글을 지울까요?<br><small class="muted">모든 사람(호스트 포함) 화면에서 지워지고 되돌릴 수 없어요.</small>','지우기',async()=>{
   const p=el.dataset.p;await W(()=>Store.del(p));
   if(p.startsWith('trial/')){CUR.trial=null;rerender()}
 },{danger:true});
@@ -1854,13 +1873,17 @@ ACT.hide=el=>{
   if(hostOnly())return;
   if(!confirm('내 화면에서만 지울까요?\n다른 팀원 화면에는 그 사람이 지울 때까지 남아 있어요.'))return;
   const t=el.dataset.t;
-  W(()=>Store.set('hide/'+t+'-'+ME.by,{cid:CUR.cid,t,by:ME.by,at:Date.now()})).then(ok=>{if(ok!==false){toast('🗑 내 화면에서 지웠어요.');if(el.closest('#modal'))closeModal();rerender()}});
+  const box=el.closest('.tbox');const inModal=!!el.closest('#modal');const small=!!el.closest('.cmt,.tm');
+  W(()=>Store.set('hide/'+t+'-'+ME.by,{cid:CUR.cid,t,by:ME.by,at:Date.now()})).then(ok=>{if(ok!==false){toast('🗑 내 화면에서 지웠어요.');
+    if(box)patchTalk2(box.dataset.t);
+    if(inModal){if(small)refreshModal();else closeModal()}
+    rerender()}});
 };
 /* 댓글 + 댓글마다 고르는 이모티콘 (이모티콘 하나 = 댓글 하나에 붙어요) */
 /* 순서를 바꾸면 이미 고른 이모티콘이 섞여요 — 새 이모티콘은 꼭 뒤에 덧붙이기 */
 const REACT=['❤️','👍','😂','😢','😮','👏','😄','🙏','🙇','😭','🥰','🔥','💯','🌿'];
 const REACT_N=['좋아요','최고','웃겨요','슬퍼요','놀라워요','박수','환한 웃음','감사해요','미안해요','엉엉 울어요','감동이에요','멋져요','완벽해요','힐링돼요'];
-function cmtsOf(t){return list('cmt',c=>c.t===t).sort((a,b)=>(a.at||0)-(b.at||0))}
+function cmtsOf(t){return list('cmt',c=>c.t===t&&(c._mine||!hidden(c.id))).sort((a,b)=>(a.at||0)-(b.at||0))}
 CUR.cmtE=CUR.cmtE||{};   // 댓글 칸마다 지금 고른 이모티콘 번호
 function cmtForm(t){const sel=CUR.cmtE[t];
   return `<form class="cmt-in" data-f="cmt" data-t="${t}">
@@ -1869,7 +1892,7 @@ function cmtForm(t){const sel=CUR.cmtE[t];
   </form>`}
 function cmtsHTML(t){
   return cmtsOf(t).map(c=>{const e=REACT[c.e];
-    return `<div class="cmt">${avatar(c.char,'sm')}<div class="cmt-b"><div class="cmt-h"><b>${esc(c.nick)}${c.by==='host'?'<span class="hostb">HOST</span>':''}</b>${hostWho(c)}</div>${c.text?`<p>${esc(c.text)}</p>`:''}</div>${e?`<span class="cmt-e" title="${REACT_N[c.e]}">${e}</span>`:''}<small>${ago(c.at)}</small>${c._mine||ROLE.host?`<button class="tm-del" data-a="del" data-p="cmt/${c.id}" aria-label="댓글 지우기">✕</button>`:''}</div>`}).join('')||'<p class="muted cmt-0">첫 댓글을 남겨 보세요 💬</p>'}
+    return `<div class="cmt">${avatar(c.char,'sm')}<div class="cmt-b"><div class="cmt-h"><b>${esc(c.nick)}${c.by==='host'?'<span class="hostb">HOST</span>':''}</b>${hostWho(c)}</div>${c.text?`<p>${esc(c.text)}</p>`:''}</div>${e?`<span class="cmt-e" title="${REACT_N[c.e]}">${e}</span>`:''}<small>${ago(c.at)}</small>${c._mine||ROLE.host?`<button class="tm-del" data-a="del" data-p="cmt/${c.id}" title="지우기 (모두에게서)" aria-label="댓글 지우기">✕</button>`:ME?`<button class="tm-del" data-a="hide" data-t="${c.id}" title="내 화면에서만 지우기" aria-label="내 화면에서만 지우기">✕</button>`:''}</div>`}).join('')||'<p class="muted cmt-0">첫 댓글을 남겨 보세요 💬</p>'}
 function talkBox(t,{form=true}={}){
   return `<div class="tbox" data-t="${t}">
     <div class="cmts">${cmtsHTML(t)}</div>
@@ -1924,13 +1947,13 @@ function vRx(){
   const seen=LS.get('rx-rxseen-'+ME.by,0);
   const mineIds=new Set(mine.map(w=>w.id));
   const newRx=list('rx',r=>mineIds.has(r.worry)&&!r._mine&&(r.at||0)>seen).length;
-  const myRoomN=rooms.filter(r=>(r.b||{}).by===ME.by).reduce((n,r)=>n+unread(r),0);
   const v=CUR.rxView;
   if(v==='mine')LS.set('rx-rxseen-'+ME.by,Date.now());
   const myRx=new Set(list('rx',r=>r._mine).map(r=>r.worry));
   return `${rxHero()}
-  <div class="bigbtns">
-    <button class="bigbtn mintb${v==='mine'?' on':''}" data-a="rx-view" data-v="mine"><span class="bb-ic">📝</span><span class="bb-t"><b>내 고민 올리기</b><small>내 고민 ${mine.length}개 · 받은 처방전 보기</small></span>${newRx+myRoomN?`<em class="nb">${newRx+myRoomN}</em>`:''}</button>
+  <div class="bigbtns three">
+    <button class="bigbtn mintb${v==='mine'?' on':''}" data-a="rx-view" data-v="mine"><span class="bb-ic">📝</span><span class="bb-t"><b>내 고민 올리기</b><small>내 고민 ${mine.length}개 · 받은 처방전 보기</small></span>${newRx?`<em class="nb">${newRx}</em>`:''}</button>
+    <button class="bigbtn lilacb" data-a="rooms"><span class="bb-ic">💌</span><span class="bb-t"><b>1:1 대화</b><small>처방전으로 이어진 대화 ${rooms.length}개</small></span>${unreadAll()?`<em class="nb">${unreadAll()}</em>`:''}</button>
     <button class="bigbtn coralb${v==='give'?' on':''}" data-a="rx-view" data-v="give"><span class="bb-ic">💊</span><span class="bb-t"><b>처방하기</b><small>팀원 고민 ${others.length}개 · 처방전 쓰기</small></span>${inN?`<em class="nb">${inN}</em>`:''}</button>
   </div>
   ${v==='mine'?rxMine(mine):v==='give'?rxGive(others,inbox,myRx):'<p class="bb-hint">👆 하고 싶은 것을 골라요</p>'}`;
@@ -1991,7 +2014,7 @@ function openWorry(id){
 }
 function worryDetail(id){
   const w=Store.peek('worry/'+id);if(!w)return null;
-  const t=tagOf(w.tag);const rs=rxOf(id);const h=L(id);
+  const t=tagOf(w.tag);const rs=rxOf(id).filter(r=>r._mine||!hidden(r.id));const h=L(id);
   return `<div class="wbig" style="--c:${t.c}">
     <div class="row"><span class="tagp">${t.e} ${t.n}</span>${w._mine?'<span class="mine">내 고민</span>':''}${w.solved?'<span class="tagp">🌈 다 나았어요</span>':''}<span class="grow"></span><span class="muted">${ago(w.at)}</span></div>
     <p>${esc(w.text)}</p>${imgHTML(w.img,{cls:'big-img'})}${hostWho(w)}
@@ -2028,7 +2051,7 @@ function slip(r,w,wid){
       ${rxChatBtn(r,w)}
       ${likeBtn(r,'eff','💊 효과 있어요','mint')}
       ${w._mine?`<button class="btn sm ${best?'pink':''}" data-a="w-best" data-w="${wid}" data-id="${r.id}">💖 ${best?'나의 명약!':'명약 지정'}</button>`:''}
-      ${r._mine||ROLE.host?delBtn(r,'rx/'+r.id):''}
+      ${trashBtn(r,'rx/'+r.id)}
     </div>
     ${best?'<span class="stamp">명약</span>':''}
   </div>`;
@@ -2312,7 +2335,6 @@ ACT['cp-new']=()=>{
   openModal({cls:'th-copy',html:`<div class="modal-hd"><h2>✍️ 필사 사진 올리기</h2><button class="xbtn" data-close aria-label="닫기">✕</button></div>
     <div class="stack">
       <label class="upl"><input type="file" accept="image/*" id="cp-file" hidden><div class="upl-in" id="cp-prev"><span class="upl-e">📷</span><b>필사한 사진 고르기 / 찍기</b><small>공책에 손으로 옮겨 쓴 부분을 찍어 주세요</small></div></label>
-      <label class="fld">제목<input class="in" id="cp-book" maxlength="60" value="${esc(w.title||'')}" placeholder="예: 아몬드"></label>
       <button class="btn orange big wide" data-a="cp-post">📮 게시판에 붙이기</button>
     </div>`});
 };
@@ -2328,9 +2350,8 @@ document.addEventListener('change',async e=>{
 });
 ACT['cp-post']=async el=>{
   if(hostOnly())return;
-  const v=id=>T($('#'+id).value);
   if(!CUR.cpImg){toast('필사한 사진을 먼저 골라 주세요.');return}
-  const w=roomWork()||{};const book=v('cp-book')||w.title||'';
+  const w=roomWork()||{};const book=w.title||'';   // 제목 칸 없음 — 이 방의 작품이 자동으로
   el.disabled=true;el.textContent='올리는 중…';
   const ok=await W(()=>Store.set('copy/'+uid(),{cid:CUR.cid,re:'',img:CUR.cpImg,media:book===w.title?(w.media||''):'',book,author:book===w.title?(w.author||''):'',line:'',thought:'',by:ME.by,nick:ME.nick,char:ME.char,at:Date.now()}));
   if(ok===false){el.disabled=false;el.textContent='📮 다시 보내기';return}
@@ -2426,8 +2447,21 @@ function caseForm({head,btn,act,data={},guest=false,alt=''}){
     </div>`;
 }
 /* 작품은 이 방의 작품으로 자동 */
-function readCase(){const v=id=>{const e=$('#'+id);return e?T(e.value):''};const w=roomWork()||{};return{who:v('t-who'),media:w.media||'',work:w.title||'',author:w.author||'',charge:v('t-charge'),emo:$('#t-emo').value}}
-ACT['pt-new']=()=>{if(hostOnly())return;delete CUR.imgs.pt;openModal({cls:'th-court',html:caseForm({head:'📝 인물법정 신청서',btn:'📮 호스트에게 신청하기',act:'pt-save',guest:true})})};
+function readCase(){const v=id=>{const e=$('#'+id);return e?T(e.value):''};const w=roomWork()||{};const em=$('#t-emo');return{who:v('t-who'),media:w.media||'',work:w.title||'',author:w.author||'',charge:v('t-charge'),emo:em?em.value:'⚖️'}}
+/* 게스트 재판 신청서: 종이 신청서 모양 · 이 방의 작품 → 피고인 → 공소 사실 → 신청 이유 → 신청하기 (아이콘·사진 없음) */
+function petForm(){
+  const w=roomWork();
+  return `<div class="modal-hd"><h2>📝 인물법정 신청서</h2><button class="xbtn" data-close aria-label="닫기">✕</button></div>
+    <div class="petform">
+      <div class="pf-title"><span>재 판 신 청 서</span><i class="pf-seal" aria-hidden="true">⚖️</i></div>
+      <div class="pf-row"><span class="pf-l">📖 이 방의 작품</span><b>${w?bookTxt(w):'<span class="muted">호스트가 아직 작품을 정하지 않았어요</span>'}</b></div>
+      <label class="pf-row"><span class="pf-l">🧑 피고인 (인물) *</span><input class="in" id="t-who" maxlength="30" placeholder="예: 윤재의 엄마"></label>
+      <label class="pf-row"><span class="pf-l">📜 공소 사실 (논란이 되는 행동) *</span><textarea class="in" id="t-charge" rows="3" maxlength="200" placeholder="피고인이 무엇을 했는지 한두 문장으로"></textarea></label>
+      <label class="pf-row"><span class="pf-l">💬 신청 이유</span><input class="in" id="t-reason" maxlength="120" placeholder="예: 정말 나쁜 사람인지 친구들과 따져 보고 싶어요"></label>
+      <button class="btn indigo big wide" data-a="pt-save">📮 호스트에게 신청하기</button>
+    </div>`;
+}
+ACT['pt-new']=()=>{if(hostOnly())return;delete CUR.imgs.pt;openModal({cls:'th-court',html:petForm()})};
 ACT['pt-save']=async el=>{
   if(hostOnly())return;
   const c=readCase();const reason=T($('#t-reason').value);
@@ -2551,7 +2585,7 @@ function vTrial(id){
     return canJoin?`<button class="c2-side ${k}" data-a="t-join" data-id="${id}" data-s="${k}">${inner}<small class="cs-m">${k==='def'?'피고인을 지켜라':'죄를 밝혀라'}</small><span class="cs-join">합류 ▶</span></button>`
       :`<div class="c2-side ${k}${mine?' mine':''}">${inner}${mine?'<span class="cs-join">⭐ 내 팀</span>':''}</div>`};
   const now=st==='live'?`<span class="c2-now live">● 재판 중 · ${leftTag(t)}</span>`:st==='wait'?`<span class="c2-now">🕐 ${fmtDate(t.start)} 개정</span>`:`<span class="c2-now done">🔔 판결: ${v.t} · ${v.s}</span>`;
-  const col=k=>{const list=ps.filter(p=>p.side===k);const sd=SIDES[k];
+  const col=k=>{const list=ps.filter(p=>p.side===k&&(p._mine||!hidden(p.id)));const sd=SIDES[k];
     return `<div class="dcol ${k}"><h3>${sd.e} ${sd.n} <small>${sd.act}</small><b>${s[k]}점</b></h3>${list.map(p=>pleaHTML(p,byId,mvp,st,my)).join('')||`<p class="dcol-0">아직 ${sd.act} 글이 없어요</p>`}</div>`};
   return `<button class="btn sm back" data-a="t-back">← 재판 신청 목록</button>
   <section class="court2" id="courthd">
@@ -2576,7 +2610,7 @@ function pleaHTML(p,byId,mvp,st,my){
     <div class="p2-hd">${avatar(p.char,'sm')}<b>${esc(p.nick)}</b>${mvp[p.id]?'<span class="mvp">👑</span>':''}${hostWho(p)}<span class="grow"></span><small>${ago(p.at)}</small></div>
     ${re?`<div class="pb-re">↳ ${esc(re.nick)}: ${esc(re.text||'📷')}</div>`:''}
     ${p.text?`<p>${esc(p.text)}</p>`:''}${imgHTML(p.img,{cls:'pb-img'})}
-    <div class="p2-ft">${likeBtn(p,'gavel','🔨','lemon')}${!ROLE.host&&my&&st==='live'&&p.side!==my.side?`<button class="btn sm" data-a="p-re" data-id="${p.id}">↩ 반박</button>`:''}${delBtn(p,'plea/'+p.id)}</div>
+    <div class="p2-ft">${likeBtn(p,'gavel','🔨','lemon')}${!ROLE.host&&my&&st==='live'&&p.side!==my.side?`<button class="btn sm" data-a="p-re" data-id="${p.id}">↩ 반박</button>`:''}${trashBtn(p,'plea/'+p.id)}</div>
   </div>`;
 }
 function pleaComposer(id,side,byId){
@@ -2677,7 +2711,7 @@ function talkSelBar(){
     <button class="btn sm coral" data-a="tsel-del" ${n?'':'disabled'}>🗑 ${n}개 지우기</button></div>`;
 }
 function talkMsgs(){
-  const ms=chats();
+  const ms=chats().filter(m=>ROLE.host||!hidden(m.id));
   if(!ms.length)return `<div class="talk-empty"><span>👋</span><b>아직 조용해요</b><small>첫 인사를 남겨 보세요!</small></div>`;
   const sel=ROLE.host&&TSEL.on;
   let out='',prev=null,prevDay='';
@@ -2692,7 +2726,7 @@ function talkMsgs(){
       ${sel?`<span class="tm-chk">${on?'✔':''}</span>`:''}
       ${me?'':`<span class="tm-av">${cont?'':avatar(m.char,'sm')}</span>`}
       <div class="tm-b">${cont||me?'':`<b class="tm-n">${esc(m.nick)}${m.by==='host'?'<span class="hostb">HOST</span>':''}${hostWho(m)}</b>`}
-        <div class="tm-row"><div class="tm-c">${m.img?imgHTML(m.img,{cls:'tm-img',zoom:!sel}):''}${m.text?`<p class="${big?'big':''}">${esc(m.text)}</p>`:''}</div><small>${hhmm(m.at)}${(me||ROLE.host)&&!sel?`<button class="tm-del" data-a="del" data-p="chat/${m.id}" title="지우기" aria-label="메시지 지우기">✕</button>`:''}</small></div></div></div>`;
+        <div class="tm-row"><div class="tm-c">${m.img?imgHTML(m.img,{cls:'tm-img',zoom:!sel}):''}${m.text?`<p class="${big?'big':''}">${esc(m.text)}</p>`:''}</div><small>${hhmm(m.at)}${(me||ROLE.host)&&!sel?`<button class="tm-del" data-a="del" data-p="chat/${m.id}" title="지우기 (모두에게서)" aria-label="메시지 지우기">✕</button>`:!sel&&ME?`<button class="tm-del" data-a="hide" data-t="${m.id}" title="내 화면에서만 지우기" aria-label="내 화면에서만 지우기">✕</button>`:''}</small></div></div></div>`;
     prev=m;
   }
   return out;
