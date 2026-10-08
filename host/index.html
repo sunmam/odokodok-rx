@@ -1338,6 +1338,31 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
 .roomw .roomr{flex:1;min-width:0}
 .roomw .rr-del{flex:0 0 auto}
 .bigbtns.one{grid-template-columns:minmax(0,1fr);max-width:520px}
+/* 🔐 입장 승인 기다림 */
+.wait-msg{display:grid;gap:4px;justify-items:center;text-align:center;margin:0;padding:14px;border:2.5px dashed var(--ink);border-radius:16px;background:#FFF8D6;font-family:var(--ui);word-break:keep-all}
+.wait-msg b{font-weight:400;font-size:17px}
+.wait-msg small{color:var(--muted);font-family:var(--body);font-size:13.5px}
+.wait-msg .wm-e{font-size:30px;animation:bob 2s ease-in-out infinite}
+.wait-msg.rej{background:#FFE7E3}
+/* 호스트 🔐 입장 승인 카드 */
+.apv{display:grid;gap:10px;margin-top:18px;border-style:dashed}
+.apv.on{border-style:solid;background:linear-gradient(180deg,#FFFDF0,#fff)}
+.apv-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.apv-hd h3{margin:0}
+.apv-hd small{flex-basis:100%;font-size:13px;word-break:keep-all}
+.apv-sw{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:999px;background:#fff;padding:3px 12px 3px 4px;font-family:var(--ui);font-size:14px;box-shadow:0 3px 0 var(--ink);cursor:pointer}
+.apv-sw .sw{width:38px;height:22px;border-radius:11px;background:#DDD;border:2px solid var(--ink);position:relative;display:inline-block}
+.apv-sw .sw i{position:absolute;top:1px;left:1px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--ink);transition:left .15s}
+.apv-sw.on{background:var(--lemon)}.apv-sw.on .sw{background:var(--mint)}.apv-sw.on .sw i{left:17px}
+.apv-list{display:grid;gap:8px}
+.apv-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border:2px solid var(--ink);border-radius:14px;background:#fff}
+.apv-r .who{display:inline-flex;align-items:center;gap:6px}
+.apv-r .who b{font-family:var(--ui);font-weight:400}
+.apv-n{font-size:14px}
+.apv-r .tag{font-size:12px;border:1.5px solid var(--ink);border-radius:999px;padding:0 7px;background:#E8F7FF}
+.apv-r .tag.again{background:#FFE7C2}
+.apv-0{margin:0;font-size:14px}
+.apv-rej summary{cursor:pointer;font-family:var(--ui);font-size:14px;color:var(--muted)}
 
 </style>
 </head>
@@ -1350,7 +1375,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261008103759";
+const BUILD = "20261008110933";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -1452,6 +1477,20 @@ function viewDoc(d,tok,host){
 }
 function cleanIn(d){const o={};for(const k in d)if(k!=='_tok'&&k!=='_vis'&&k!=='_name'&&k!=='_mine')o[k]=d[k];return o}
 const Srv={
+  /* 🔐 입장 승인 (Code.gs 와 같은 규칙): 모임의 approve 가 false 가 아니면 승인받은 사람만 그 방 글을 읽고 써요 */
+  needApprove(cls){return !!cls&&cls.approve!==false},
+  okRoom(db,cid,tok){
+    if(!cid)return true;const cls=db['classes/'+cid];if(!cls)return false;if(!Srv.needApprove(cls))return true;if(!tok)return false;
+    for(const p in db){const d=db[p];if(p.indexOf('people/'+cid+'-')===0&&d&&d._tok===tok)return !d.wait}
+    return false;
+  },
+  /* 읽기: 모임 이름(classes)과 닉네임(people)은 누구나, 나머지는 읽을 수 있는 방 것만 */
+  canRead(db,p,d,tok,host){
+    if(host||p.startsWith('classes/')||p.startsWith('people/'))return true;
+    if(!d||typeof d!=='object')return true;
+    if(d.cid===undefined)return d._tok===tok;
+    return Srv.okRoom(db,d.cid,tok);
+  },
   apply(db,op,host,tok){
     const path=String(op.path||'');
     if(!/^[\w\-]+\/[\w\-]+$/.test(path))return{ok:false,error:'bad_path'};
@@ -1465,6 +1504,7 @@ const Srv={
     }
     if(!tok||GUEST_W.indexOf(pre)<0)return{ok:false,error:'host_only'};
     if(cur&&cur._tok!==tok)return{ok:false,error:'not_owner'};
+    if(!Srv.okRoom(db,String((cur&&cur.cid)||(op.data&&op.data.cid)||''),tok))return{ok:false,error:'not_approved'};
     if(op.op==='delete'){delete db[path];return{ok:true}}
     if(op.op==='update'&&!cur)return{ok:false,error:'gone'};
     if(op.op!=='set'&&op.op!=='update')return{ok:false,error:'bad_op'};
@@ -1479,15 +1519,18 @@ const Srv={
     const cid=String(b.cid||'');if(!db['classes/'+cid])return{ok:false,error:'no_class'};
     const name=normName(b.name);if(!name)return{ok:false,error:'no_name'};
     const pre='people/'+cid+'-';
-    for(const p in db){if(p.indexOf(pre)===0&&db[p]&&db[p]._name===name){const d=db[p];if(!b.keep){if(typeof b.char==='number')d.char=b.char;if(b.nick)d.nick=String(b.nick).slice(0,20)}return{ok:true,tok:d._tok,by:d.by,nick:d.nick,char:d.char,back:true}}}
+    const approve=Srv.needApprove(db['classes/'+cid]);
+    for(const p in db){if(p.indexOf(pre)===0&&db[p]&&db[p]._name===name){const d=db[p];if(!b.keep){if(typeof b.char==='number')d.char=b.char;if(b.nick)d.nick=String(b.nick).slice(0,20)}if(approve){d.wait=true;d.again=true;d.rej=false;d.ask=Date.now()}return{ok:true,tok:d._tok,by:d.by,nick:d.nick,char:d.char,back:true,wait:!!d.wait}}}
     const by=uid();const tok=uid('t')+uid();
     const d={cid,by,nick:String(b.nick||'').slice(0,20)||'익명의 독자',char:Number(b.char)||0,at:Date.now(),_name:name,_tok:tok};
     db[pre+by]=d;
-    return{ok:true,tok,by,nick:d.nick,char:d.char,back:false};
+    if(approve){d.wait=true;d.ask=Date.now()}
+    return{ok:true,tok,by,nick:d.nick,char:d.char,back:false,wait:approve};
   },
   /* 마음 약국: 처방을 받은 고민 주인이 약사에게 1:1 대화 신청 */
   rxchat(db,b){
     const rx=db['rx/'+String(b.id||'')];if(!rx)return{ok:false,error:'gone'};
+    if(!Srv.okRoom(db,rx.cid,b.tok))return{ok:false,error:'not_approved'};
     const w=db['worry/'+String(rx.worry||'')];if(!w||w._tok!==b.tok)return{ok:false,error:'not_owner'};
     if(rx._tok&&rx._tok===b.tok)return{ok:false,error:'own'};
     const rp='room/'+b.id+'-'+b.by;
@@ -1497,6 +1540,7 @@ const Srv={
   },
   draw(db,b){
     const v=db['vend/'+String(b.id||'')];if(!v)return{ok:false,error:'gone'};
+    if(!Srv.okRoom(db,v.cid,b.tok))return{ok:false,error:'not_approved'};
     if(v._tok===b.tok)return{ok:false,error:'own'};
     const rp='room/'+b.id+'-'+b.by;
     if(db[rp])return{ok:true,room:rp,book:db[rp].book||{}};
@@ -1515,7 +1559,7 @@ const Store=(()=>{
   const LKEY='odokodok-rx-db-v1';
   const lload=()=>LS.get(LKEY,{});
   const lsave=()=>{try{localStorage.setItem(LKEY,JSON.stringify(raw));return true}catch(e){return false}};
-  function rebuild(){all={};for(const p in raw){const v=viewDoc(raw[p],tok,ROLE.host);if(v!==undefined)all[p]=clone(v)}}
+  function rebuild(){all={};const ok={};for(const p in raw){const d=raw[p];if(!ROLE.host&&d&&d.cid!==undefined&&!p.startsWith('classes/')&&!p.startsWith('people/')){const k=d.cid;if(!(k in ok))ok[k]=Srv.okRoom(raw,k,tok);if(!ok[k])continue}else if(!Srv.canRead(raw,p,d,tok,ROLE.host))continue;const v=viewDoc(d,tok,ROLE.host);if(v!==undefined)all[p]=clone(v)}}
   if(LOCAL)window.addEventListener('storage',e=>{if(e.key===LKEY){raw=lload();rebuild();notify()}});
   function localRun(fn){
     const backup=JSON.stringify(raw);
@@ -1611,6 +1655,8 @@ const Store=(()=>{
     peek(p){return all[p]},
     coll(prefix){const out={};const pre=prefix+'/';for(const p in all){if(p.startsWith(pre)&&p.indexOf('/',pre.length)<0)out[p.slice(pre.length)]=all[p]}return out},
     refresh:pull,
+    /* 처음부터 통째로 다시 받기 (입장 승인처럼 볼 수 있는 범위가 바뀌었을 때) */
+    full(){if(LOCAL){rebuild();notify();return}return pull(true,true)},
     set:(path,data)=>post({op:'set',path,data}),
     update:(path,data)=>post({op:'update',path,data}),
     del:path=>post({op:'delete',path}),
@@ -1669,6 +1715,7 @@ function dbErr(e){
   if(c==='host_only')toast('호스트만 할 수 있어요.');
   else if(c==='not_owner')toast('내가 쓴 글만 고칠 수 있어요.');
   else if(c==='not_member')toast('이 대화방에 들어갈 수 없어요.');
+  else if(c==='not_approved')toast('🔐 호스트의 입장 승인을 받아야 쓸 수 있어요.');
   else if(c==='too_big')toast('내용이나 사진이 너무 커서 저장하지 못했어요.');
   else if(c==='local_full')toast('체험 모드 저장 공간이 가득 찼어요. (사진이 너무 많아요)');
   else if(c==='gone')toast('이미 지워진 글이에요.');
@@ -1888,13 +1935,33 @@ ACT.like=async el=>{
   el.classList.add('shake');
   await W(()=>Store.peek(p)?Store.del(p):Store.set(p,{t,k:el.dataset.k,cid:CUR.cid,by:ME.by,at:Date.now()}));
 };
+/* 호스트가 고민·처방전을 지우면 거기서 이어진 것도 함께 지워요
+   고민 → 그 고민의 처방전 + 연결된 💌 1:1 대화방(대화 포함) / 처방전 → 연결된 1:1 대화방(대화 포함) */
+function delWith(p){
+  if(!ROLE.host)return [];
+  const [col,id]=p.split('/');const out=[];
+  const rooms=col==='worry'?list('room',r=>r.worry===id):col==='rx'?list('room',r=>r.rx===id):[];
+  if(col==='worry')list('rx',r=>r.worry===id).forEach(r=>out.push('rx/'+r.id));
+  rooms.forEach(r=>{out.push('room/'+r.id);msgsOf(r.id).forEach(m=>out.push('msg/'+m.id))});
+  return out;
+}
+async function delNow(p){
+  const ps=[p,...delWith(p)];
+  for(let i=0;i<ps.length;i+=40){const ok=await W(()=>Store.batch(ps.slice(i,i+40).map(path=>({op:'delete',path}))));if(ok===false)return false}
+}
+function delMsg(p,html){
+  const n=list('room',r=>{const[c,id]=p.split('/');return ROLE.host&&((c==='worry'&&r.worry===id)||(c==='rx'&&r.rx===id))}).length;
+  const extra=n?(html?`<br><small class="muted">연결된 💌 1:1 대화방 ${n}개도 대화와 함께 지워져요.</small>`:`\n연결된 💌 1:1 대화방 ${n}개도 대화와 함께 지워져요.`):'';
+  return ROLE.host?(html?'정말 지울까요? 지운 글은 되돌릴 수 없어요.':'정말 지울까요? 지운 글은 되돌릴 수 없어요.')+extra
+    :html?'내 글을 지울까요?<br><small class="muted">모든 사람(호스트 포함) 화면에서 지워지고 되돌릴 수 없어요.</small>':'내 글을 지울까요?\n모든 사람(호스트 포함) 화면에서 지워지고 되돌릴 수 없어요.';
+}
 ACT.del=el=>{
   /* 창(모달) 안에서 지울 때는 창이 닫히지 않게 간단한 확인만 */
-  if(el.closest('#modal')){if(confirm(ROLE.host?'정말 지울까요? 지운 글은 되돌릴 수 없어요.':'내 글을 지울까요?\n모든 사람(호스트 포함) 화면에서 지워지고 되돌릴 수 없어요.'))W(()=>Store.del(el.dataset.p)).then(()=>refreshModal());return}
+  if(el.closest('#modal')){const p=el.dataset.p;if(confirm(delMsg(p,false)))delNow(p).then(()=>{if(p.startsWith('worry/')||p.startsWith('sub/'))closeModal();else refreshModal();rerender()});return}
   delConfirm(el);
 };
-const delConfirm=el=>confirmBox(ROLE.host?'정말 지울까요? 지운 글은 되돌릴 수 없어요.':'내 글을 지울까요?<br><small class="muted">모든 사람(호스트 포함) 화면에서 지워지고 되돌릴 수 없어요.</small>','지우기',async()=>{
-  const p=el.dataset.p;await W(()=>Store.del(p));
+const delConfirm=el=>confirmBox(delMsg(el.dataset.p,true),'지우기',async()=>{
+  const p=el.dataset.p;await delNow(p);
   if(p.startsWith('trial/')){CUR.trial=null;rerender()}
 },{danger:true});
 
@@ -2760,7 +2827,7 @@ function chats(){return list('chat').sort((a,b)=>(a.at||0)-(b.at||0))}
 function talkSeenKey(){return 'rx-talk-'+CUR.cid}
 function talkUnread(){if(ROLE.host||!ME)return 0;const s=LS.get(talkSeenKey(),0);return chats().filter(m=>m.by!==ME.by&&(m.at||0)>s).length}
 function isBigEmoji(t){try{return t.length<=12&&/^(\p{Extended_Pictographic}|️|‍|\s)+$/u.test(t)}catch(e){return false}}
-function talkPeople(){return Object.values(Store.coll('people')).filter(p=>p&&p.cid===CUR.cid)}
+function talkPeople(){return Object.values(Store.coll('people')).filter(p=>p&&p.cid===CUR.cid&&!p.wait)}   // 승인 기다리는 사람은 빼고
 function talkHead(){
   const c=Store.peek('classes/'+CUR.cid)||{};const ppl=talkPeople();
   return `<div class="talk-av">${ppl.slice(-6).map(p=>avatar(p.char,'sm')).join('')||avatar(-1,'sm')}</div>
@@ -2998,7 +3065,7 @@ function vTaskDetail(tid){
       <td class="muted">${s?fmtDate(s.at)+(taskLate(t,s.at)?' <span class="late">늦음</span>':'')+(s.n>1?` <small>(${s.n}번째)</small>`:''):''}</td>
       <td>${s&&s.text?`<button class="btn sm" data-a="hw-read" data-k="${esc(tid+'-'+p.by)}">📝 ${esc(s.text.slice(0,14))}${s.text.length>14?'…':''}</button>`:''}</td>
       <td>${s&&s.img?imgHTML(s.img,{cls:'hw-thumb'}):''}</td>
-      <td>${s&&s.file?`<a class="btn sm" href="${esc(s.file.url)}" target="_blank" rel="noopener" ${s.file.url.startsWith('data:')?`download="${esc(s.file.name)}"`:''}>📎 ${esc(s.file.name.slice(0,16))}</a>`:''}</td><td>${s?`<button class="btn sm ghost" data-a="del" data-p="sub/${esc(tid+'-'+p.by)}" title="제출물 지우기">🗑</button>`:''}</td></tr>`}).join('')}
+      <td>${s&&s.file?`<a class="btn sm" href="${esc(s.file.url)}" target="_blank" rel="noopener" ${s.file.url.startsWith('data:')?`download="${esc(s.file.name)}"`:''}>📎 ${esc(s.file.name.slice(0,16))}</a>`:''}</td><td>${s?`<button class="btn sm ghost" data-a="del" data-p="sub/${esc(tid+'-'+p.by)}" title="이 학생의 제출물만 지우기">🗑 지우기</button>`:''}</td></tr>`}).join('')}
   </tbody></table></div>`:empty('🙋','해당하는 게스트가 없어요','')}`;
 }
 ACT['hw-open']=el=>{CUR.task=el.dataset.id;CUR.hwF='all';rerender();window.scrollTo({top:0})};
@@ -3010,7 +3077,8 @@ ACT['hw-read']=el=>{
     <p class="muted" style="margin-top:-8px">${esc(t.title||'')} · ${fmtDate(s.at)} ${hostWho(s)}</p>
     <div class="sub-text">${esc(s.text)}</div>
     ${imgHTML(s.img,{cls:'big-img'})}
-    ${s.file?`<p><a class="btn" href="${esc(s.file.url)}" target="_blank" rel="noopener">📎 ${esc(s.file.name)} 열기</a></p>`:''}`});
+    ${s.file?`<p><a class="btn" href="${esc(s.file.url)}" target="_blank" rel="noopener">📎 ${esc(s.file.name)} 열기</a></p>`:''}
+    <div class="row"><span class="grow"></span><button class="btn sm ghost" data-a="del" data-p="sub/${esc(el.dataset.k)}">🗑 이 제출물 지우기</button></div>`});
 };
 ACT['hw-toggle']=async el=>{const p='task/'+el.dataset.id;const t=Store.peek(p);if(!t)return;await W(()=>Store.update(p,{closed:!t.closed}));toast(t.closed?'다시 열었어요.':'마감했어요. 게스트는 더 이상 제출할 수 없어요.')};
 ACT['hw-csv']=el=>{
@@ -3077,7 +3145,7 @@ function hRender(){
   const list=classesSorted();
   if(CUR.cid&&!Store.peek('classes/'+CUR.cid))CUR.cid=null;
   if(!CUR.cid&&list.length)CUR.cid=list[0].id;
-  buildIX();
+  buildIX();noteWaiters();
   const th=H.view==='set'?'set':H.view;
   document.body.className='th-'+th;
   if(!$('#main')){
@@ -3090,7 +3158,7 @@ function hRender(){
     <span id="netdot" class="tag" style="background:var(--coral);color:#fff" hidden>연결 끊김</span>
     ${LOCAL?'':'<button class="btn sm" data-a="h-lock" title="이 컴퓨터에 기억된 비밀번호를 지우고 잠가요">🔒</button>'}`;
   const hSeen=LS.get('rx-h-talk-'+CUR.cid,0);
-  const counts=c?{talk:H.view==='talk'?0:list_('chat').filter(m=>m.by!=='host'&&(m.at||0)>hSeen).length,hw:list_('task').filter(t=>!t.closed).length,rx:list_('worry').length,vend:list_('vend').length,copy:list_('copy').filter(d=>!d.re).length,court:list_('trial').filter(t=>tState(t)==='live').length+list_('petition').filter(p=>(p.status||'wait')==='wait').length}:{};
+  const counts=c?{set:waitCount(c.id),talk:H.view==='talk'?0:list_('chat').filter(m=>m.by!=='host'&&(m.at||0)>hSeen).length,hw:list_('task').filter(t=>!t.closed).length,rx:list_('worry').length,vend:list_('vend').length,copy:list_('copy').filter(d=>!d.re).length,court:list_('trial').filter(t=>tState(t)==='live').length+list_('petition').filter(p=>(p.status||'wait')==='wait').length}:{};
   $('#mtabs').innerHTML=[{k:'set',e:'⚙️',s:'모임 세팅',c:'#B9A6FF',d:'#8E6CFF'},...TABS].map(t=>`<button class="mtab${H.view===t.k?' on':''}" style="--c:${t.c};--d:${t.d}" data-a="h-view" data-v="${t.k}">
       <span class="mt-ic">${t.e}</span><span class="mt-t">${t.lg?`<span class="lg">${t.lg}</span>`:''}${t.s}</span>${counts[t.k]?`<b class="bt-n">${counts[t.k]}</b>`:''}${c&&t.k!=='set'&&!menuOn(c,t.k)?'<b class="bt-n" style="background:var(--ink)">OFF</b>':''}</button>`).join('');
   const main=$('#main');
@@ -3145,7 +3213,8 @@ function vWelcome(){
 }
 function vClass(c){
   const link=guestLink(c.id);
-  const ppl=Object.values(Store.coll('people')).filter(p=>p&&p.cid===c.id).sort((a,b)=>String(a._name||'').localeCompare(String(b._name||''),'ko',{numeric:true}));
+  const all=Object.values(Store.coll('people')).filter(p=>p&&p.cid===c.id).sort((a,b)=>String(a._name||'').localeCompare(String(b._name||''),'ko',{numeric:true}));
+  const ppl=all.filter(p=>!p.wait);   // 승인 기다리는 사람은 아래 🔐 칸에
   const cnt=(p,f)=>list(p).filter(f||(()=>true)).length;
   const stats=[['💬','대화 메시지',cnt('chat')],['📥','과제 제출',cnt('sub')],['💊','고민 접수',cnt('worry')],['📋','처방전',cnt('rx')],['🎰','문장 캡슐',cnt('vend')],['💬','대화방',cnt('room')],['✍️','필사',cnt('copy',d=>!d.re)],['💌','화답',cnt('copy',d=>d.re)],['⚖️','사건',cnt('trial')],['📝','재판 신청',cnt('petition')],['🔨','변론',cnt('plea')]];
   const by=(p,k)=>list(p).filter(d=>d.by===k).length;
@@ -3163,6 +3232,7 @@ function vClass(c){
        <p class="muted" style="margin:0;font-size:13px">게스트는 이 주소로 들어와 이름(학번)·캐릭터를 고르면 바로 참여해요. 이름은 호스트에게만 보여요.</p></div>
      <div class="qrbox" id="qr" data-u="${esc(link)}" ${link?'':'hidden'} data-a="h-qr" title="눌러서 크게 보기"></div>
    </div>
+   ${approveCard(c,all)}
    <div style="margin-top:18px">${workEditor()}</div>
    <div class="sec-h"><h2>🎛️ 메뉴 켜고 끄기</h2><span class="muted">꺼 둔 메뉴는 게스트 화면에서 사라져요</span></div>
    <div class="menus">${TABS.map(t=>{const on=menuOn(c,t.k);return `<button class="mcard${on?' on':''}" style="--c:${t.c}" data-a="h-menu" data-k="${t.k}" aria-pressed="${on}">
@@ -3173,6 +3243,46 @@ function vClass(c){
    ${ppl.length?`<div class="card tbl-wrap"><table class="tbl"><thead><tr><th>이름(학번)</th><th>닉네임</th><th title="고민 접수">💊</th><th title="처방전">📋</th><th title="문장 캡슐">🎰</th><th title="필사·화답">✍️</th><th title="변론">🔨</th><th title="단체 대화">💬</th><th title="과제 제출">📥</th><th>입장</th></tr></thead><tbody>
      ${ppl.map(p=>`<tr><td><b>${esc(p._name||'')}</b></td><td><span class="who">${avatar(p.char,'sm')}${esc(p.nick)}</span></td><td>${byTok('worry',p._tok)}</td><td>${by('rx',p.by)}</td><td>${byTok('vend',p._tok)}</td><td>${by('copy',p.by)}</td><td>${by('plea',p.by)}</td><td>${by('chat',p.by)}</td><td>${by('sub',p.by)}</td><td class="muted">${ago(p.at)}</td></tr>`).join('')}
    </tbody></table></div>`:empty('🙋','아직 들어온 게스트가 없어요','주소나 QR을 공유해 보세요.')}`;
+}
+/* ---------- 🔐 입장 승인 ----------
+   켜 두면(기본) 주소를 받은 사람도 호스트가 승인해야 그 방 글을 보고 쓸 수 있어요.
+   이미 있는 이름으로 다시 들어오려는 경우도 다시 승인 (이름만 알면 남의 기록에 들어가는 것 방지) */
+function approveCard(c,all){
+  const on=c.approve!==false;
+  const wait=all.filter(p=>p.wait&&!p.rej).sort((a,b)=>(a.ask||0)-(b.ask||0)),rej=all.filter(p=>p.wait&&p.rej);
+  const row=p=>`<div class="apv-r"><span class="who">${avatar(p.char,'sm')}<b>${esc(p.nick)}</b></span><span class="apv-n">🪪 ${esc(p._name||'')}${p.again?' <span class="tag again" title="이미 있는 이름으로 다시 들어오려 해요. 본인이 맞는지 확인해 주세요.">🔁 다시 입장</span>':' <span class="tag">🆕 처음</span>'}</span><small class="muted">${p.ask?ago(p.ask):''}</small><span class="grow"></span>
+    <button class="btn sm mint" data-a="ap-ok" data-p="people/${p.cid}-${p.by}">✅ 승인</button>${p.rej?'':`<button class="btn sm" data-a="ap-no" data-p="people/${p.cid}-${p.by}">🙅 거절</button>`}</div>`;
+  return `<div class="card apv${on?' on':''}">
+    <div class="apv-hd"><h3>🔐 입장 승인</h3>
+      <button class="apv-sw${on?' on':''}" data-a="h-approve" aria-pressed="${on}"><span class="sw"><i></i></span>${on?'켜짐':'꺼짐'}</button>
+      <small class="muted">${on?'주소를 받은 사람도 <b>호스트가 승인해야</b> 들어와요 (승인 전엔 글을 볼 수도 쓸 수도 없어요)':'주소만 있으면 누구나 바로 들어와요'}</small></div>
+    ${on?(wait.length?`<div class="apv-list">${wait.map(row).join('')}</div>${wait.length>1?`<div class="row"><span class="grow"></span><button class="btn mint" data-a="ap-all">✅ ${wait.length}명 모두 승인</button></div>`:''}`
+      :'<p class="muted apv-0">지금 승인을 기다리는 사람이 없어요.</p>'):''}
+    ${on&&rej.length?`<details class="apv-rej"><summary>🙅 거절한 사람 ${rej.length}명</summary><div class="apv-list">${rej.map(row).join('')}</div></details>`:''}
+  </div>`;
+}
+ACT['h-approve']=async()=>{
+  const c=hCls();if(!c)return;const on=c.approve===false;
+  const ops=[{op:'update',path:'classes/'+c.id,data:{approve:on}}];
+  /* 끄면 기다리던 사람은 모두 들어오게 */
+  if(!on)Object.values(Store.coll('people')).filter(p=>p&&p.cid===c.id&&p.wait).forEach(p=>ops.push({op:'update',path:'people/'+p.cid+'-'+p.by,data:{wait:false,rej:false,again:false}}));
+  const ok=await hW(()=>Store.batch(ops));
+  if(ok!==false){toast(on?'🔐 입장 승인을 켰어요. 이제 새로 들어오는 사람은 승인해야 들어와요.':'🔓 입장 승인을 껐어요. 주소만 있으면 바로 들어와요.');hRender()}
+};
+ACT['ap-ok']=async el=>{const ok=await hW(()=>Store.update(el.dataset.p,{wait:false,rej:false,again:false}));if(ok!==false){toast('✅ 승인했어요. 곧 그 게스트 화면이 열려요.');hRender()}};
+ACT['ap-no']=async el=>{if(!confirm('입장을 거절할까요?\n그 사람은 이 방 글을 볼 수 없고, 다시 신청할 수 있어요.'))return;const ok=await hW(()=>Store.update(el.dataset.p,{rej:true}));if(ok!==false){toast('🙅 거절했어요.');hRender()}};
+ACT['ap-all']=async()=>{
+  const c=hCls();if(!c)return;
+  const ops=Object.values(Store.coll('people')).filter(p=>p&&p.cid===c.id&&p.wait&&!p.rej).map(p=>({op:'update',path:'people/'+p.cid+'-'+p.by,data:{wait:false,rej:false,again:false}}));
+  const ok=await hW(()=>Store.batch(ops));if(ok!==false){toast(`✅ ${ops.length}명을 승인했어요.`);hRender()}
+};
+/* 새 입장 신청이 오면 알려 주기 + ⚙️ 모임 세팅 탭에 숫자 */
+function waitCount(cid){return Object.values(Store.coll('people')).filter(p=>p&&p.cid===cid&&p.wait&&!p.rej).length}
+function noteWaiters(){
+  const seen=H.seenWait||(H.seenWait=new Set(Object.values(Store.coll('people')).filter(p=>p&&p.wait).map(p=>p.cid+'-'+p.by+'-'+(p.ask||0))));
+  const fresh=Object.values(Store.coll('people')).filter(p=>p&&p.wait&&!p.rej&&!seen.has(p.cid+'-'+p.by+'-'+(p.ask||0)));
+  fresh.forEach(p=>seen.add(p.cid+'-'+p.by+'-'+(p.ask||0)));
+  if(fresh.length){const p=fresh[fresh.length-1];const cn=(Store.peek('classes/'+p.cid)||{}).name||'';toast(`🔐 입장 승인 요청: ${p.nick} (${p._name||''})${cn?' · '+cn:''} → ⚙️ 모임 세팅에서 승인해요`)}
 }
 function drawQR(){
   const el=$('#qr');if(!el||!el.dataset.u||!window.QRCode)return;
