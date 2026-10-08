@@ -1333,6 +1333,11 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
   .bigbtns.three .bb-t b{font-size:16px;word-break:keep-all}
   .bigbtns.three .bb-t small{font-size:11.5px;word-break:keep-all;line-height:1.35}
 }
+/* 1:1 대화방 줄 + 🗑 */
+.roomw{display:flex;align-items:center;gap:8px}
+.roomw .roomr{flex:1;min-width:0}
+.roomw .rr-del{flex:0 0 auto}
+.bigbtns.one{grid-template-columns:minmax(0,1fr);max-width:520px}
 
 </style>
 </head>
@@ -1345,7 +1350,7 @@ button.c2-side:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
    GUEST_URL : (호스트용) 게스트용 사이트 주소. 호스트 화면에서도 바꿀 수 있어요. 비워 두면 …/guest/ 자동. */
 const API_URL = "https://script.google.com/macros/s/AKfycbzgal1GCY5NJMQl-kq-DfnduXIWPBA8baLKcqPk0W05ji-9_ec_D0SaR9ZEjUQtJJeP/exec";
 const GUEST_URL = "";
-const BUILD = "20261006160549";
+const BUILD = "20261008103759";
 /* ▲▲▲ 설정 끝 ▲▲▲ */
 </script>
 <script>
@@ -2025,7 +2030,9 @@ function rxGive(others,inbox,myRx){
 }
 function vRxHost(){
   const ws=worries();const cnt={};list('rx').forEach(r=>cnt[r.worry]=(cnt[r.worry]||0)+1);
+  const rn=rxRooms().length;
   return `${rxHero()}
+  <div class="bigbtns one"><button class="bigbtn lilacb" data-a="rooms"><span class="bb-ic">💌</span><span class="bb-t"><b>모든 1:1 대화방</b><small>처방전으로 이어진 대화 ${rn}개 · 읽기 · 🗑 지우기</small></span></button></div>
   <div class="filters"><h2 style="font-size:22px">💊 모든 고민 <small class="muted">${ws.length}</small></h2><span class="muted" style="font-family:var(--ui);font-size:13px">호스트는 👤 실명을 보고, 처방하거나 지울 수 있어요</span></div>
   <div class="wgrid">${ws.slice().reverse().map(w=>worryCard(w,cnt[w.id]||0)).join('')||empty('💊','아직 접수된 고민이 없어요','게스트가 고민을 올리면 여기에 나타나요.')}</div>`;
 }
@@ -2139,7 +2146,7 @@ ACT['rx-chat']=async el=>{
 /* ---------- 📮 1:1 대화 (마음 약국 처방전에서 열려요) ---------- */
 function roomOf(vid){return ME?Store.peek('room/'+vid+'-'+ME.by):null}
 function myRooms(){return list('room').sort((a,b)=>lastAt(b)-lastAt(a))}
-function rxRooms(){return myRooms().filter(r=>r.kind==='rx')}
+function rxRooms(){return myRooms().filter(r=>r.kind==='rx'&&!roomHidden(r))}
 function msgsOf(rid){return list('msg',m=>m.room===rid).sort((a,b)=>(a.at||0)-(b.at||0))}
 function lastAt(r){const ms=msgsOf(r.id);return ms.length?ms[ms.length-1].at:(r.at||0)}
 /* 대화를 신청받아 새로 열린 방(아직 안 열어 봄)도 "안 읽음 1" */
@@ -2160,10 +2167,27 @@ function noteNewRooms(){
 ACT['roombar-x']=()=>{const b=$('#roombar');if(b)b.remove()};
 function roomRow(r){
   const a=r.a||{},b=r.b||{};const other=ME?(a.by===ME.by?b:a):null;const ms=msgsOf(r.id);const last=ms[ms.length-1];const n=unread(r);
-  return `<button class="roomr" data-a="chat" data-id="${r.id}"><span class="pair">${avatar(a.char)}${avatar(b.char)}</span>
+  return `<div class="roomw"><button class="roomr" data-a="chat" data-id="${r.id}"><span class="pair">${avatar(a.char)}${avatar(b.char)}</span>
     <span class="rr-t"><b>${ROLE.host||!other?`${esc(a.nick)} ↔ ${esc(b.nick)}`:esc(other.nick)+(other===a?' · 나에게 처방한 약사':' · 내 처방을 받은 팀원')}</b><small>💊 ${esc(String(r.line||'').slice(0,30))} · ${last?esc(last.text||'📷 사진'):'아직 대화가 없어요'}</small></span>
-    ${n?`<b class="nb">${n}</b>`:`<small class="muted">${ago(last?last.at:r.at)}</small>`}</button>`;
+    ${n?`<b class="nb">${n}</b>`:`<small class="muted">${ago(last?last.at:r.at)}</small>`}</button><button class="btn sm ghost trash rr-del" data-a="room-del" data-id="${r.id}" title="${ROLE.host?"대화방 지우기":"내 목록에서 지우기"}" aria-label="대화방 지우기">🗑</button></div>`;
 }
+/* 🗑 1:1 대화방 지우기
+   게스트: 내 목록에서만 지워요 (상대 목록엔 남고, 상대가 새 메시지를 보내면 내 목록에 다시 나타나요)
+   호스트: 대화방과 대화 내용을 모두 지워요 */
+function roomHidden(r){if(ROLE.host||!ME)return false;const h=Store.peek('hide/'+r.id+'-'+ME.by);return !!h&&lastAt(r)<=(h.at||0)}
+ACT['room-del']=el=>{
+  const id=el.dataset.id;const r=Store.peek('room/'+id);if(!r)return;
+  if(ROLE.host){
+    if(!confirm('이 1:1 대화방을 지울까요?\n대화 내용까지 모두 지워지고 되돌릴 수 없어요.'))return;
+    (async()=>{
+      const ops=[{op:'delete',path:'room/'+id},...msgsOf(id).map(m=>({op:'delete',path:'msg/'+m.id}))];
+      for(let i=0;i<ops.length;i+=40){if(await W(()=>Store.batch(ops.slice(i,i+40)))===false)return}
+      toast('🗑 대화방을 지웠어요.');refreshModal();rerender();
+    })();return;
+  }
+  if(!confirm('이 대화방을 내 목록에서 지울까요?\n상대방 목록에는 남아 있고, 상대가 새 메시지를 보내면 다시 나타나요.'))return;
+  W(()=>Store.set('hide/'+id+'-'+ME.by,{cid:CUR.cid,t:id,by:ME.by,at:Date.now()})).then(ok=>{if(ok!==false){toast('🗑 대화방을 내 목록에서 지웠어요.');refreshModal();rerender()}});
+};
 ACT.rooms=()=>{
   openModal({cls:'th-rx',html:`<div class="modal-hd"><h2>📮 ${ROLE.host?'모든 1:1 대화방':'나의 1:1 대화방'}</h2><button class="xbtn" data-close aria-label="닫기">✕</button></div>
     ${ROLE.host?'<p class="muted" style="margin-top:-6px">호스트는 모든 1:1 대화방을 읽을 수 있어요. (게스트에게는 자기 대화방만 보여요)</p>':''}
@@ -2175,6 +2199,7 @@ ACT.rooms=()=>{
 ACT.chat=el=>openChat(el.dataset.id);
 function openChat(rid){
   const r=Store.peek('room/'+rid);if(!r){toast('대화방을 찾지 못했어요. 잠시 후 다시 눌러 주세요.');Store.refresh();return}
+  if(ME&&!ROLE.host&&Store.peek('hide/'+rid+'-'+ME.by))W(()=>Store.del('hide/'+rid+'-'+ME.by));   // 지운 방을 다시 열면 목록에 다시 보여요
   const a=r.a||{},b=r.b||{};const other=ME?(a.by===ME.by?b:a):null;
   const canSend=!ROLE.host||a.by==='host';
   let atBottom=true;
